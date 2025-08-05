@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<metadata>
+    <layout title="Editar Cliente">
+        <message>
+            <![CDATA[Formulario para editar un cliente existente]]>
+        </message>
+    </layout>
+</metadata>

@@ -1,0 +1,358 @@
+/**
+ * Odoo Contacts Component Styles
+ */
+
+.odoo-contacts-component {
+    margin: 20px 0;
+}
+
+.page-header {
+    margin-bottom: 30px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.page-header h1 {
+    color: #495057;
+    font-size: 2rem;
+    font-weight: 600;
+    margin-bottom: 10px;
+}
+
+.user-info {
+    font-size: 0.9rem;
+}
+
+.contacts-ribbon {
+    margin-bottom: 25px;
+    padding: 20px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.contacts-ribbon .form-control {
+    border: none;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.contacts-ribbon .input-group-text {
+    background-color: white;
+    border: none;
+    color: #667eea;
+}
+
+.contacts-ribbon .btn {
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    border: none;
+    font-weight: 500;
+}
+
+.contacts-ribbon .btn-outline-secondary {
+    background-color: white;
+    color: #667eea;
+}
+
+.contacts-ribbon .btn-outline-secondary:hover {
+    background-color: #f8f9fa;
+    color: #667eea;
+}
+
+.contacts-table-container {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    overflow: hidden;
+    margin-bottom: 20px;
+}
+
+.contacts-table-container table {
+    margin-bottom: 0;
+}
+
+.contacts-table-container th {
+    background-color: #343a40;
+    color: white;
+    font-weight: 600;
+    border: none;
+    padding: 15px 12px;
+    font-size: 0.9rem;
+}
+
+.contacts-table-container th.text-center {
+    text-align: center;
+}
+
+.contacts-table-container td {
+    padding: 15px 12px;
+    vertical-align: middle;
+    border-color: #dee2e6;
+}
+
+.contacts-table-container tbody tr:hover {
+    background-color: #f8f9fa;
+}
+
+.contact-name {
+    line-height: 1.4;
+}
+
+.badge {
+    font-size: 0.75rem;
+}
+
+.btn-group-vertical .btn {
+    margin-bottom: 2px;
+}
+
+.btn-group-vertical .btn:last-child {
+    margin-bottom: 0;
+}
+
+.btn-group-sm .btn {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+}
+
+.btn-group .btn {
+    margin-right: 2px;
+}
+
+.btn-group .btn:last-child {
+    margin-right: 0;
+}
+
+/* Action Button Styles */
+.btn-outline-primary:hover {
+    background-color: #007bff;
+    border-color: #007bff;
+    color: white;
+}
+
+.btn-outline-info:hover {
+    background-color: #17a2b8;
+    border-color: #17a2b8;
+    color: white;
+}
+
+/* Contact Form Styles */
+.contact-form-container {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.card {
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    margin-bottom: 20px;
+}
+
+.card-header {
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #dee2e6;
+    padding: 15px 20px;
+}
+
+.card-title {
+    color: #495057;
+    font-weight: 600;
+}
+
+.card-body {
+    padding: 20px;
+}
+
+.form-label {
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 5px;
+}
+
+.form-control:focus,
+.form-select:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+.form-actions {
+    padding: 20px;
+    background-color: #f8f9fa;
+    border-top: 1px solid #dee2e6;
+    border-radius: 0 0 8px 8px;
+}
+
+/* Alert Styles */
+.alert {
+    border-radius: 8px;
+    padding: 20px;
+}
+
+.alert h4 {
+    margin-bottom: 10px;
+}
+
+/* Breadcrumb */
+.breadcrumb {
+    background-color: transparent;
+    padding: 0;
+    margin-bottom: 0;
+}
+
+.breadcrumb-item + .breadcrumb-item::before {
+    content: ">";
+    color: #6c757d;
+}
+
+/* Modal Enhancements */
+.modal-header {
+    background-color: #dc3545;
+    color: white;
+}
+
+.modal-header .btn-close {
+    filter: invert(1);
+}
+
+/* Contact Links Enhancement */
+.text-decoration-none:hover {
+    text-decoration: underline !important;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .contacts-ribbon .row > div {
+        margin-bottom: 15px;
+    }
+    
+    .contacts-ribbon .text-end {
+        text-align: left !important;
+    }
+    
+    .contacts-table-container {
+        overflow-x: auto;
+    }
+    
+    .contacts-table-container table {
+        min-width: 700px;
+    }
+    
+    .btn-group-vertical {
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .btn-group-vertical .btn {
+        width: 100%;
+    }
+    
+    .contact-form-container .row > div {
+        margin-bottom: 20px;
+    }
+    
+    .form-actions .btn-toolbar {
+        flex-direction: column;
+    }
+    
+    .form-actions .btn-group {
+        margin-bottom: 10px;
+        width: 100%;
+    }
+    
+    .form-actions .btn {
+        width: 100%;
+        margin-bottom: 5px;
+    }
+}
+
+/* Action Buttons */
+.btn-outline-primary:hover {
+    background-color: #007bff;
+    border-color: #007bff;
+}
+
+.btn-outline-danger:hover {
+    background-color: #dc3545;
+    border-color: #dc3545;
+}
+
+.btn-outline-secondary:hover {
+    background-color: #6c757d;
+    border-color: #6c757d;
+}
+
+/* Empty State */
+.alert-info {
+    text-align: center;
+    padding: 40px;
+}
+
+.alert-info h4 {
+    color: #0c5460;
+    margin-bottom: 15px;
+}
+
+/* Form Validation */
+.form-control:invalid {
+    border-color: #dc3545;
+}
+
+.form-control:invalid:focus {
+    border-color: #dc3545;
+    box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
+}
+
+.required {
+    border-left: 3px solid #007bff;
+}
+
+/* Loading States */
+.loading {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+.spinner-border-sm {
+    width: 1rem;
+    height: 1rem;
+}
+
+/* Contact Links */
+a[href^="mailto:"] {
+    color: #007bff;
+    text-decoration: none;
+}
+
+a[href^="mailto:"]:hover {
+    text-decoration: underline;
+}
+
+a[href^="tel:"] {
+    color: #28a745;
+    text-decoration: none;
+}
+
+a[href^="tel:"]:hover {
+    text-decoration: underline;
+}
+
+/* Text Utilities */
+.text-muted {
+    color: #6c757d !important;
+}
+
+/* Pagination */
+.pagination {
+    margin-top: 20px;
+    justify-content: center;
+}
+
+.page-link {
+    color: #007bff;
+}
+
+.page-item.active .page-link {
+    background-color: #007bff;
+    border-color: #007bff;
+}
