@@ -181,6 +181,13 @@ function safeGet($array, $key, $default = '') {
                                         <i class="fas fa-edit"></i>
                                     </a>
                                     
+                                    <!-- New Action Button -->
+                                    <a href="<?php echo Route::_('index.php?option=com_odoocontacts&view=newaction&id=' . (int)safeGet($item, 'id', 0)); ?>" 
+                                       class="btn btn-outline-info btn-sm" 
+                                       title="Nueva Acción">
+                                        <i class="fas fa-cog"></i>
+                                    </a>
+                                    
                                     <!-- Delete Button -->
                                     <button type="button" 
                                             class="btn btn-outline-danger btn-sm" 
