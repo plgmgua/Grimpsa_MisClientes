@@ -60,7 +60,7 @@ class ContactsModel extends ListModel
             
             $page = floor($limitstart / $limit) + 1;
             
-            $contacts = $helper->getContactsByAgent($user->name, $page, $limit, $search);
+            $contacts = $helper->getContactsByAgent($user->name, $page, $limit, '');
             
             // Ensure we return a proper array
             if (!is_array($contacts)) {
@@ -84,7 +84,20 @@ class ContactsModel extends ListModel
                         'type' => isset($contact['type']) && is_string($contact['type']) ? $contact['type'] : 'contact'
                     ];
                     
-                    $validContacts[] = $normalizedContact;
+                    // Apply search filter on server side
+                    if (!empty($search)) {
+                        $searchLower = strtolower($search);
+                        $nameMatch = strpos(strtolower($normalizedContact['name']), $searchLower) !== false;
+                        $emailMatch = strpos(strtolower($normalizedContact['email']), $searchLower) !== false;
+                        $phoneMatch = strpos(strtolower($normalizedContact['phone']), $searchLower) !== false;
+                        $mobileMatch = strpos(strtolower($normalizedContact['mobile']), $searchLower) !== false;
+                        
+                        if ($nameMatch || $emailMatch || $phoneMatch || $mobileMatch) {
+                            $validContacts[] = $normalizedContact;
+                        }
+                    } else {
+                        $validContacts[] = $normalizedContact;
+                    }
                 }
             }
             
@@ -112,7 +125,37 @@ class ContactsModel extends ListModel
         try {
             $helper = new OdooHelper();
             $search = $this->getState('filter.search', '');
-            return $helper->getContactsCountByAgent($user->name, $search);
+            
+            // Get all contacts and filter on server side for accurate count
+            $allContacts = $helper->getContactsByAgent($user->name, 1, 1000, '');
+            
+            if (!is_array($allContacts)) {
+                return 0;
+            }
+            
+            // Apply search filter to get accurate count
+            if (!empty($search)) {
+                $filteredCount = 0;
+                foreach ($allContacts as $contact) {
+                    if (is_array($contact)) {
+                        $searchLower = strtolower($search);
+                        $name = isset($contact['name']) ? strtolower($contact['name']) : '';
+                        $email = isset($contact['email']) ? strtolower($contact['email']) : '';
+                        $phone = isset($contact['phone']) ? strtolower($contact['phone']) : '';
+                        $mobile = isset($contact['mobile']) ? strtolower($contact['mobile']) : '';
+                        
+                        if (strpos($name, $searchLower) !== false || 
+                            strpos($email, $searchLower) !== false || 
+                            strpos($phone, $searchLower) !== false || 
+                            strpos($mobile, $searchLower) !== false) {
+                            $filteredCount++;
+                        }
+                    }
+                }
+                return $filteredCount;
+            } else {
+                return count($allContacts);
+            }
         } catch (Exception $e) {
             // Fallback to a reasonable number if count fails
             return 50;

@@ -107,25 +107,6 @@ class OdooHelper
      */
     public function getContactsByAgent($agentName, $page = 1, $limit = 20, $search = '')
     {
-        // Build search domain
-        $domain = [];
-        
-        // Add agent filter
-        $domain[] = ['x_studio_agente_de_ventas', '=', $agentName];
-        
-        // Add search filter if provided
-        if (!empty($search)) {
-            $domain[] = ['|', '|', '|',
-                ['name', 'ilike', $search],
-                ['email', 'ilike', $search],
-                ['phone', 'ilike', $search],
-                ['mobile', 'ilike', $search]
-            ];
-        }
-        
-        // Convert domain to XML format
-        $domainXml = $this->buildDomainXml($domain);
-        
         // Use the exact same XML structure as get_contacts_by_vendor.php
         $xmlPayload = '<?xml version="1.0"?>
 <methodCall>
@@ -147,7 +128,7 @@ class OdooHelper
          <value><string>search_read</string></value> <!-- Method -->
       </param>
       <param>
-         <value><array><data>' . $domainXml . '</data></array></value> <!-- Args -->
+         <value><array><data/></array></value> <!-- Args -->
       </param>
       <param>
          <value>
@@ -232,25 +213,6 @@ class OdooHelper
      */
     public function getContactsCountByAgent($agentName, $search = '')
     {
-        // Build search domain
-        $domain = [];
-        
-        // Add agent filter
-        $domain[] = ['x_studio_agente_de_ventas', '=', $agentName];
-        
-        // Add search filter if provided
-        if (!empty($search)) {
-            $domain[] = ['|', '|', '|',
-                ['name', 'ilike', $search],
-                ['email', 'ilike', $search],
-                ['phone', 'ilike', $search],
-                ['mobile', 'ilike', $search]
-            ];
-        }
-        
-        // Convert domain to XML format
-        $domainXml = $this->buildDomainXml($domain);
-        
         // Use search_count method to get total count
         $xmlPayload = '<?xml version="1.0"?>
 <methodCall>
@@ -272,7 +234,7 @@ class OdooHelper
          <value><string>search_count</string></value>
       </param>
       <param>
-         <value><array><data>' . $domainXml . '</data></array></value>
+         <value><array><data/></array></value>
       </param>
    </params>
 </methodCall>';
