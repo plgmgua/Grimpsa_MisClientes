@@ -121,6 +121,12 @@ class HtmlView extends BaseHtmlView
         $wa = $this->document->getWebAssetManager();
         $wa->registerAndUseStyle('com_odoocontacts.contacts', 'media/com_odoocontacts/css/contacts.css', [], ['version' => 'auto']);
         $wa->registerAndUseScript('com_odoocontacts.contacts', 'media/com_odoocontacts/js/contacts.js', [], ['version' => 'auto']);
+        
+        // Debug: Add version info to help troubleshoot
+        $config = ComponentHelper::getParams('com_odoocontacts');
+        if ($config->get('enable_debug', 0)) {
+            Factory::getApplication()->enqueueMessage('Odoo Contacts Component v1.0.0-STABLE loaded. CSS: contacts.css', 'notice');
+        }
     }
 
     /**

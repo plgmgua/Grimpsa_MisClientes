@@ -17,6 +17,10 @@ use Joomla\CMS\Factory;
 
 HTMLHelper::_('bootstrap.framework');
 
+// Fallback CSS loading to ensure styles are applied
+$wa = Factory::getApplication()->getDocument()->getWebAssetManager();
+$wa->registerAndUseStyle('com_odoocontacts.contacts', 'media/com_odoocontacts/css/contacts.css', [], ['version' => 'auto']);
+
 $user = Factory::getUser();
 
 // Safe function to escape strings
@@ -35,6 +39,28 @@ function safeGet($array, $key, $default = '') {
     return $default;
 }
 ?>
+
+<style>
+/* Backup inline styles to ensure the new design is applied */
+.odoo-contacts-component .contacts-ribbon {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%) !important;
+    border: 1px solid #dee2e6 !important;
+    color: #495057 !important;
+}
+.odoo-contacts-component .contacts-table-container th {
+    background-color: #f8f9fa !important;
+    color: #495057 !important;
+    border-bottom: 2px solid #dee2e6 !important;
+}
+.odoo-contacts-component .contacts-table-container td {
+    padding: 10px 8px !important;
+    border-color: #f1f3f4 !important;
+}
+.odoo-contacts-component .page-header h1 {
+    color: #2c3e50 !important;
+    font-size: 1.75rem !important;
+}
+</style>
 
 <div class="odoo-contacts-component">
     <div class="page-header">
