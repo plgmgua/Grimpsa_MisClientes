@@ -236,7 +236,7 @@ function safeGet($array, $key, $default = '') {
             </table>
             
             <!-- Pagination Controls -->
-            <?php if ($this->pagination && $this->pagination->getPagesTotal() > 1): ?>
+            <?php if ($this->pagination && $this->pagination->getTotal() > 0): ?>
                 <div class="pagination-container mt-3">
                     <div class="row align-items-center">
                         <div class="col-md-6">
