@@ -50,8 +50,8 @@ function safeGet($array, $key, $default = '') {
 
     <!-- Main Actions Ribbon -->
     <div class="contacts-ribbon">
-        <div class="row">
-            <div class="col-md-8">
+        <div class="row align-items-center">
+            <div class="col-md-7">
                 <form action="<?php echo Route::_('index.php?option=com_odoocontacts&view=contacts'); ?>" method="post" name="adminForm" id="adminForm">
                     <div class="input-group">
                         <span class="input-group-text">
@@ -60,7 +60,7 @@ function safeGet($array, $key, $default = '') {
                         <input type="text" name="filter_search" id="filter_search" 
                                value="" 
                                class="form-control" 
-                               placeholder="Buscar por nombre, email, teléfono..." />
+                               placeholder="Buscar clientes..." />
                         <button class="btn btn-outline-secondary" type="submit">
                             Buscar
                         </button>
@@ -69,13 +69,13 @@ function safeGet($array, $key, $default = '') {
                     <?php echo HTMLHelper::_('form.token'); ?>
                 </form>
             </div>
-            <div class="col-md-4 text-end">
+            <div class="col-md-5 text-end">
                 <div class="btn-group" role="group">
                     <a href="<?php echo Route::_('index.php?option=com_odoocontacts&view=contact&layout=edit&id=0'); ?>" 
-                       class="btn btn-success btn-lg">
+                       class="btn btn-success">
                         <i class="fas fa-plus"></i> Nuevo Cliente
                     </a>
-                    <button type="button" class="btn btn-info btn-lg" onclick="window.location.reload()">
+                    <button type="button" class="btn btn-info" onclick="window.location.reload()">
                         <i class="fas fa-sync-alt"></i> Actualizar
                     </button>
                 </div>
@@ -95,14 +95,14 @@ function safeGet($array, $key, $default = '') {
                 </a>
             </div>
         <?php else: ?>
-            <table class="table table-striped table-hover">
-                <thead class="table-dark">
+            <table class="table table-hover">
+                <thead>
                     <tr>
-                        <th width="5%" class="text-center">ID</th>
-                        <th width="30%">Nombre</th>
-                        <th width="25%">Email</th>
+                        <th width="4%" class="text-center">ID</th>
+                        <th width="35%">Cliente</th>
+                        <th width="25%">Contacto</th>
                         <th width="20%">Teléfono</th>
-                        <th width="20%" class="text-center">Acciones</th>
+                        <th width="16%" class="text-center">Acciones</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -115,8 +115,7 @@ function safeGet($array, $key, $default = '') {
                             <td>
                                 <div class="contact-name">
                                     <strong>
-                                        <a href="<?php echo Route::_('index.php?option=com_odoocontacts&view=contact&layout=edit&id=' . (int)safeGet($item, 'id', 0)); ?>" 
-                                           class="text-decoration-none text-dark">
+                                        <a href="<?php echo Route::_('index.php?option=com_odoocontacts&view=contact&layout=edit&id=' . (int)safeGet($item, 'id', 0)); ?>">
                                             <?php echo safeEscape(safeGet($item, 'name'), 'Sin nombre'); ?>
                                         </a>
                                     </strong>
@@ -126,71 +125,72 @@ function safeGet($array, $key, $default = '') {
                                     ?>
                                         <br><small class="badge bg-info"><?php echo safeEscape(ucfirst($type)); ?></small>
                                     <?php endif; ?>
+                                    <?php 
+                                    $vat = safeGet($item, 'vat');
+                                    if (!empty($vat)): 
+                                    ?>
+                                        <br><small class="text-muted">NIT: <?php echo safeEscape($vat); ?></small>
+                                    <?php endif; ?>
                                 </div>
-                                <?php 
-                                $vat = safeGet($item, 'vat');
-                                if (!empty($vat)): 
-                                ?>
-                                    <br><small class="text-muted"><strong>NIT:</strong> <?php echo safeEscape($vat); ?></small>
-                                <?php endif; ?>
                             </td>
                             <td>
-                                <?php 
-                                $email = safeGet($item, 'email');
-                                if (!empty($email)): 
-                                ?>
-                                    <a href="mailto:<?php echo safeEscape($email); ?>" class="text-decoration-none">
-                                        <i class="fas fa-envelope text-primary"></i>
-                                        <?php echo safeEscape($email); ?>
-                                    </a>
-                                <?php else: ?>
-                                    <span class="text-muted">-</span>
-                                <?php endif; ?>
+                                <div class="contact-info">
+                                    <?php 
+                                    $email = safeGet($item, 'email');
+                                    if (!empty($email)): 
+                                    ?>
+                                        <a href="mailto:<?php echo safeEscape($email); ?>">
+                                            <i class="fas fa-envelope text-primary"></i>
+                                            <?php echo safeEscape($email); ?>
+                                        </a>
+                                    <?php else: ?>
+                                        <span class="text-muted">-</span>
+                                    <?php endif; ?>
+                                </div>
                             </td>
                             <td>
-                                <?php 
-                                $phone = safeGet($item, 'phone');
-                                $mobile = safeGet($item, 'mobile');
-                                if (!empty($phone)): 
-                                ?>
-                                    <a href="tel:<?php echo safeEscape($phone); ?>" class="text-decoration-none">
-                                        <i class="fas fa-phone text-success"></i>
-                                        <?php echo safeEscape($phone); ?>
-                                    </a>
-                                    <?php if (!empty($mobile)): ?>
-                                        <br><a href="tel:<?php echo safeEscape($mobile); ?>" class="text-decoration-none">
+                                <div class="contact-info">
+                                    <?php 
+                                    $phone = safeGet($item, 'phone');
+                                    $mobile = safeGet($item, 'mobile');
+                                    if (!empty($phone)): 
+                                    ?>
+                                        <a href="tel:<?php echo safeEscape($phone); ?>">
+                                            <i class="fas fa-phone text-success"></i>
+                                            <?php echo safeEscape($phone); ?>
+                                        </a>
+                                        <?php if (!empty($mobile)): ?>
+                                            <br><a href="tel:<?php echo safeEscape($mobile); ?>">
+                                                <i class="fas fa-mobile-alt text-success"></i>
+                                                <?php echo safeEscape($mobile); ?>
+                                            </a>
+                                        <?php endif; ?>
+                                    <?php elseif (!empty($mobile)): ?>
+                                        <a href="tel:<?php echo safeEscape($mobile); ?>">
                                             <i class="fas fa-mobile-alt text-success"></i>
                                             <?php echo safeEscape($mobile); ?>
                                         </a>
+                                    <?php else: ?>
+                                        <span class="text-muted">-</span>
                                     <?php endif; ?>
-                                <?php elseif (!empty($mobile)): ?>
-                                    <a href="tel:<?php echo safeEscape($mobile); ?>" class="text-decoration-none">
-                                        <i class="fas fa-mobile-alt text-success"></i>
-                                        <?php echo safeEscape($mobile); ?>
-                                    </a>
-                                <?php else: ?>
-                                    <span class="text-muted">-</span>
-                                <?php endif; ?>
+                                </div>
                             </td>
-                            <td>
+                            <td class="text-center">
                                 <div class="btn-group btn-group-sm" role="group">
-                                    <!-- Edit Contact Button -->
                                     <a href="<?php echo Route::_('index.php?option=com_odoocontacts&view=contact&layout=edit&id=' . (int)safeGet($item, 'id', 0)); ?>" 
-                                       class="btn btn-outline-primary btn-sm" 
+                                       class="btn btn-outline-primary" 
                                        title="Editar Cliente">
                                         <i class="fas fa-edit"></i>
                                     </a>
                                     
-                                    <!-- New Action Button -->
                                     <a href="<?php echo Route::_('index.php?option=com_odoocontacts&view=newaction&id=' . (int)safeGet($item, 'id', 0)); ?>" 
-                                       class="btn btn-outline-info btn-sm" 
+                                       class="btn btn-outline-info" 
                                        title="Nueva Acción">
                                         <i class="fas fa-cog"></i>
                                     </a>
                                     
-                                    <!-- Delete Button -->
                                     <button type="button" 
-                                            class="btn btn-outline-danger btn-sm" 
+                                            class="btn btn-outline-danger" 
                                             onclick="deleteContact(<?php echo (int)safeGet($item, 'id', 0); ?>, '<?php echo addslashes(safeGet($item, 'name', 'Sin nombre')); ?>')" 
                                             title="Eliminar">
                                         <i class="fas fa-trash"></i>
