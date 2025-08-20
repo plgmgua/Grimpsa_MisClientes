@@ -126,6 +126,12 @@ class HtmlView extends BaseHtmlView
         $config = ComponentHelper::getParams('com_odoocontacts');
         if ($config->get('enable_debug', 0)) {
             Factory::getApplication()->enqueueMessage('Odoo Contacts Component v1.0.0-STABLE loaded. CSS: contacts.css', 'notice');
+            
+            // Debug search functionality
+            $search = $this->state->get('filter.search', '');
+            if (!empty($search)) {
+                Factory::getApplication()->enqueueMessage('Search term: "' . $search . '"', 'notice');
+            }
         }
     }
 

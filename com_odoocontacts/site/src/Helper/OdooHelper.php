@@ -107,6 +107,25 @@ class OdooHelper
      */
     public function getContactsByAgent($agentName, $page = 1, $limit = 20, $search = '')
     {
+        // Build search domain
+        $domain = [];
+        
+        // Add agent filter
+        $domain[] = ['x_studio_agente_de_ventas', '=', $agentName];
+        
+        // Add search filter if provided
+        if (!empty($search)) {
+            $domain[] = ['|', '|', '|',
+                ['name', 'ilike', $search],
+                ['email', 'ilike', $search],
+                ['phone', 'ilike', $search],
+                ['mobile', 'ilike', $search]
+            ];
+        }
+        
+        // Convert domain to XML format
+        $domainXml = $this->buildDomainXml($domain);
+        
         // Use the exact same XML structure as get_contacts_by_vendor.php
         $xmlPayload = '<?xml version="1.0"?>
 <methodCall>
@@ -128,7 +147,7 @@ class OdooHelper
          <value><string>search_read</string></value> <!-- Method -->
       </param>
       <param>
-         <value><array><data/></array></value> <!-- Args -->
+         <value><array><data>' . $domainXml . '</data></array></value> <!-- Args -->
       </param>
       <param>
          <value>
@@ -171,6 +190,39 @@ class OdooHelper
     }
 
     /**
+     * Build domain XML for Odoo API calls
+     *
+     * @param   array  $domain  The search domain
+     *
+     * @return  string  XML string representation of the domain
+     */
+    private function buildDomainXml($domain)
+    {
+        if (empty($domain)) {
+            return '';
+        }
+        
+        $xml = '';
+        foreach ($domain as $condition) {
+            if (is_array($condition)) {
+                if (count($condition) === 3) {
+                    // Field condition: ['field', 'operator', 'value']
+                    $xml .= '<value><array><data>';
+                    $xml .= '<value><string>' . htmlspecialchars($condition[0]) . '</string></value>';
+                    $xml .= '<value><string>' . htmlspecialchars($condition[1]) . '</string></value>';
+                    $xml .= '<value><string>' . htmlspecialchars($condition[2]) . '</string></value>';
+                    $xml .= '</data></array></value>';
+                } elseif (count($condition) === 1) {
+                    // OR operator: ['|']
+                    $xml .= '<value><string>' . htmlspecialchars($condition[0]) . '</string></value>';
+                }
+            }
+        }
+        
+        return $xml;
+    }
+
+    /**
      * Get total count of contacts for an agent
      *
      * @param   string  $agentName  The sales agent name
@@ -180,6 +232,25 @@ class OdooHelper
      */
     public function getContactsCountByAgent($agentName, $search = '')
     {
+        // Build search domain
+        $domain = [];
+        
+        // Add agent filter
+        $domain[] = ['x_studio_agente_de_ventas', '=', $agentName];
+        
+        // Add search filter if provided
+        if (!empty($search)) {
+            $domain[] = ['|', '|', '|',
+                ['name', 'ilike', $search],
+                ['email', 'ilike', $search],
+                ['phone', 'ilike', $search],
+                ['mobile', 'ilike', $search]
+            ];
+        }
+        
+        // Convert domain to XML format
+        $domainXml = $this->buildDomainXml($domain);
+        
         // Use search_count method to get total count
         $xmlPayload = '<?xml version="1.0"?>
 <methodCall>
@@ -201,7 +272,7 @@ class OdooHelper
          <value><string>search_count</string></value>
       </param>
       <param>
-         <value><array><data/></array></value>
+         <value><array><data>' . $domainXml . '</data></array></value>
       </param>
    </params>
 </methodCall>';
