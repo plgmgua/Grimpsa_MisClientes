@@ -55,7 +55,7 @@ class ContactsModel extends ListModel
             
             // Get pagination and search parameters
             $limitstart = $this->getStart();
-            $limit = $this->getState('list.limit', 20);
+            $limit = $this->getState('list.limit', 15);
             $search = $this->getState('filter.search', '');
             
             $page = floor($limitstart / $limit) + 1;
@@ -115,7 +115,7 @@ class ContactsModel extends ListModel
     public function getPagination()
     {
         // Get the pagination request variables
-        $limit = $this->getState('list.limit', 20);
+        $limit = $this->getState('list.limit', 15);
         $limitstart = $this->getState('list.start', 0);
 
         // Get the total number of contacts
@@ -138,7 +138,7 @@ class ContactsModel extends ListModel
         $app = Factory::getApplication();
         
         // Get the pagination request variables
-        $limit = $app->getUserStateFromRequest('global.list.limit', 'limit', $app->get('list_limit'), 'uint');
+        $limit = $app->getUserStateFromRequest('global.list.limit', 'limit', 15, 'uint');
         $this->setState('list.limit', $limit);
 
         $limitstart = $app->input->get('limitstart', 0, 'uint');

@@ -300,6 +300,44 @@
     border-color: #007bff;
 }
 
+/* Pagination Container */
+.pagination-container {
+    padding: 15px 20px;
+    background-color: #f8f9fa;
+    border-top: 1px solid #e9ecef;
+    border-radius: 0 0 6px 6px;
+}
+
+.pagination-info {
+    font-size: 0.875rem;
+}
+
+.pagination-controls {
+    display: flex;
+    justify-content: flex-end;
+}
+
+/* Items Per Page Selector */
+.items-per-page-container {
+    padding: 10px 20px;
+    background-color: #f8f9fa;
+    border-top: 1px solid #e9ecef;
+}
+
+.items-per-page-container .input-group {
+    max-width: 200px;
+}
+
+.items-per-page-container .form-select {
+    border-color: #ced4da;
+    font-size: 0.875rem;
+}
+
+.items-per-page-container .form-select:focus {
+    border-color: #5a6c7d;
+    box-shadow: 0 0 0 0.2rem rgba(90, 108, 125, 0.15);
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
     .contacts-ribbon .row > div {

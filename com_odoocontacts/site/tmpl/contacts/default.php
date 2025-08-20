@@ -84,14 +84,21 @@ function safeGet($array, $key, $default = '') {
                             <i class="fas fa-search"></i>
                         </span>
                         <input type="text" name="filter_search" id="filter_search" 
-                               value="" 
+                               value="<?php echo htmlspecialchars($this->state->get('filter.search', '')); ?>" 
                                class="form-control" 
                                placeholder="Buscar clientes..." />
                         <button class="btn btn-outline-secondary" type="submit">
                             Buscar
                         </button>
+                        <?php if (!empty($this->state->get('filter.search', ''))): ?>
+                            <a href="<?php echo Route::_('index.php?option=com_odoocontacts&view=contacts'); ?>" 
+                               class="btn btn-outline-danger" title="Limpiar búsqueda">
+                                <i class="fas fa-times"></i>
+                            </a>
+                        <?php endif; ?>
                     </div>
                     <input type="hidden" name="task" value="" />
+                    <input type="hidden" name="limitstart" value="0" />
                     <?php echo HTMLHelper::_('form.token'); ?>
                 </form>
             </div>
@@ -227,6 +234,48 @@ function safeGet($array, $key, $default = '') {
                     <?php endforeach; ?>
                 </tbody>
             </table>
+            
+            <!-- Pagination Controls -->
+            <?php if ($this->pagination && $this->pagination->get('pages.total') > 1): ?>
+                <div class="pagination-container mt-3">
+                    <div class="row align-items-center">
+                        <div class="col-md-6">
+                            <div class="pagination-info">
+                                <small class="text-muted">
+                                    Mostrando <?php echo $this->pagination->get('pages.current') * $this->pagination->get('limit') - $this->pagination->get('limit') + 1; ?> 
+                                    a <?php echo min($this->pagination->get('pages.current') * $this->pagination->get('limit'), $this->pagination->get('total')); ?> 
+                                    de <?php echo $this->pagination->get('total'); ?> contactos
+                                </small>
+                            </div>
+                        </div>
+                        <div class="col-md-6 text-end">
+                            <div class="pagination-controls">
+                                <?php echo $this->pagination->getPagesLinks(); ?>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            <?php endif; ?>
+            
+            <!-- Items Per Page Selector -->
+            <div class="items-per-page-container mt-3">
+                <div class="row align-items-center">
+                    <div class="col-md-6">
+                        <form action="<?php echo Route::_('index.php?option=com_odoocontacts&view=contacts'); ?>" method="post" name="limitForm" id="limitForm">
+                            <div class="input-group" style="max-width: 200px;">
+                                <label class="input-group-text" for="limit">Mostrar:</label>
+                                <select name="limit" id="limit" class="form-select" onchange="this.form.submit()">
+                                    <option value="15" <?php echo ($this->state->get('list.limit') == 15) ? 'selected' : ''; ?>>15</option>
+                                    <option value="30" <?php echo ($this->state->get('list.limit') == 30) ? 'selected' : ''; ?>>30</option>
+                                    <option value="100" <?php echo ($this->state->get('list.limit') == 100) ? 'selected' : ''; ?>>100</option>
+                                </select>
+                            </div>
+                            <input type="hidden" name="filter_search" value="<?php echo htmlspecialchars($this->state->get('filter.search', '')); ?>" />
+                            <?php echo HTMLHelper::_('form.token'); ?>
+                        </form>
+                    </div>
+                </div>
+            </div>
         <?php endif; ?>
     </div>
 </div>
@@ -272,6 +321,29 @@ document.addEventListener('DOMContentLoaded', function() {
     var deleteForm = document.getElementById('deleteForm');
     if (deleteForm) {
         deleteForm.action = window.location.href.split('?')[0] + '?option=com_odoocontacts&view=contacts';
+    }
+    
+    // Handle search form submission
+    var searchForm = document.getElementById('adminForm');
+    if (searchForm) {
+        searchForm.addEventListener('submit', function(e) {
+            // Clear any existing limitstart to start from first page when searching
+            var limitstartInput = searchForm.querySelector('input[name="limitstart"]');
+            if (limitstartInput) {
+                limitstartInput.value = '0';
+            }
+        });
+    }
+    
+    // Handle search input enter key
+    var searchInput = document.getElementById('filter_search');
+    if (searchInput) {
+        searchInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                document.getElementById('adminForm').submit();
+            }
+        });
     }
 });
 </script>
