@@ -236,15 +236,15 @@ function safeGet($array, $key, $default = '') {
             </table>
             
             <!-- Pagination Controls -->
-            <?php if ($this->pagination && $this->pagination->get('pages.total') > 1): ?>
+            <?php if ($this->pagination && $this->pagination->getPagesTotal() > 1): ?>
                 <div class="pagination-container mt-3">
                     <div class="row align-items-center">
                         <div class="col-md-6">
                             <div class="pagination-info">
                                 <small class="text-muted">
-                                    Mostrando <?php echo $this->pagination->get('pages.current') * $this->pagination->get('limit') - $this->pagination->get('limit') + 1; ?> 
-                                    a <?php echo min($this->pagination->get('pages.current') * $this->pagination->get('limit'), $this->pagination->get('total')); ?> 
-                                    de <?php echo $this->pagination->get('total'); ?> contactos
+                                    Mostrando <?php echo $this->pagination->getLimitStart() + 1; ?> 
+                                    a <?php echo min($this->pagination->getLimitStart() + $this->pagination->getLimit(), $this->pagination->getTotal()); ?> 
+                                    de <?php echo $this->pagination->getTotal(); ?> contactos
                                 </small>
                             </div>
                         </div>

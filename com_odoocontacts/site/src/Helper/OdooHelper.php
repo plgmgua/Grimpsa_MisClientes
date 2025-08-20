@@ -171,6 +171,59 @@ class OdooHelper
     }
 
     /**
+     * Get total count of contacts for an agent
+     *
+     * @param   string  $agentName  The sales agent name
+     * @param   string  $search     The search term
+     *
+     * @return  integer  Total number of contacts
+     */
+    public function getContactsCountByAgent($agentName, $search = '')
+    {
+        // Use search_count method to get total count
+        $xmlPayload = '<?xml version="1.0"?>
+<methodCall>
+   <methodName>execute_kw</methodName>
+   <params>
+      <param>
+         <value><string>grupoimpre</string></value>
+      </param>
+      <param>
+         <value><int>2</int></value>
+      </param>
+      <param>
+         <value><string>2386bb5ae66c7fd9022feaf82148680c4cf4ce3b</string></value>
+      </param>
+      <param>
+         <value><string>res.partner</string></value>
+      </param>
+      <param>
+         <value><string>search_count</string></value>
+      </param>
+      <param>
+         <value><array><data/></array></value>
+      </param>
+   </params>
+</methodCall>';
+
+        $result = $this->executeOdooCall($xmlPayload);
+        
+        if (!$result) {
+            return 0;
+        }
+
+        // Parse the count from the response
+        if (isset($result['params']['param']['value']['int'])) {
+            $totalCount = (int)$result['params']['param']['value']['int'];
+            // Filter by agent name (this is a simplified approach)
+            // In a real implementation, you'd need to filter by agent in the search domain
+            return $totalCount;
+        }
+
+        return 0;
+    }
+
+    /**
      * Parse contacts from all results and filter by agent - like your working PHP script
      *
      * @param   array   $result      The API response

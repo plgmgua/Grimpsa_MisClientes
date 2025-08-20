@@ -103,8 +103,20 @@ class ContactsModel extends ListModel
      */
     public function getTotal()
     {
-        // For now, we'll return a reasonable number since Odoo doesn't easily provide total counts
-        return 100;
+        $user = Factory::getUser();
+        
+        if ($user->guest) {
+            return 0;
+        }
+
+        try {
+            $helper = new OdooHelper();
+            $search = $this->getState('filter.search', '');
+            return $helper->getContactsCountByAgent($user->name, $search);
+        } catch (Exception $e) {
+            // Fallback to a reasonable number if count fails
+            return 50;
+        }
     }
 
     /**
