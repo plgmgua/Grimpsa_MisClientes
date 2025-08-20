@@ -115,10 +115,12 @@ class HtmlView extends BaseHtmlView
         // Set the title
         $this->document->setTitle(Text::_('COM_ODOOCONTACTS_CONTACTS_TITLE'));
         
-        // Add CSS and JS
+        // Add CSS and JS using WebAssetManager
         HTMLHelper::_('bootstrap.framework');
-        HTMLHelper::_('script', 'com_odoocontacts/contacts.js', ['version' => 'auto', 'relative' => true]);
-        HTMLHelper::_('stylesheet', 'com_odoocontacts/contacts.css', ['version' => 'auto', 'relative' => true]);
+        
+        $wa = $this->document->getWebAssetManager();
+        $wa->registerAndUseStyle('com_odoocontacts.contacts', 'media/com_odoocontacts/css/contacts.css', [], ['version' => 'auto']);
+        $wa->registerAndUseScript('com_odoocontacts.contacts', 'media/com_odoocontacts/js/contacts.js', [], ['version' => 'auto']);
     }
 
     /**

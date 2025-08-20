@@ -1,6 +1,12 @@
 /**
  * Odoo Contacts Component Styles
+ * Professional and compact design with sober colors
  */
+
+/* Force override any existing styles */
+.odoo-contacts-component * {
+    box-sizing: border-box;
+}
 
 .odoo-contacts-component {
     margin: 20px 0;
