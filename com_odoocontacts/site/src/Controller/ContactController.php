@@ -299,6 +299,120 @@ class ContactController extends FormController
     }
 
     /**
+     * Method to get parent contact info (AJAX)
+     *
+     * @return  void
+     */
+    public function getParentContact()
+    {
+        $user = Factory::getUser();
+        
+        if ($user->guest) {
+            echo json_encode(['success' => false, 'message' => 'Unauthorized']);
+            $this->app->close();
+        }
+
+        $clientId = $this->input->getInt('id', 0);
+        
+        if ($clientId <= 0) {
+            echo json_encode(['success' => false, 'message' => 'Invalid client ID']);
+            $this->app->close();
+        }
+
+        try {
+            $model = $this->getModel('Contact');
+            $contact = $model->getItem($clientId);
+            
+            if ($contact) {
+                echo json_encode([
+                    'success' => true,
+                    'data' => [
+                        'id' => $contact->id,
+                        'name' => $contact->name,
+                        'phone' => $contact->phone,
+                        'mobile' => $contact->mobile,
+                        'email' => $contact->email
+                    ]
+                ]);
+            } else {
+                echo json_encode(['success' => false, 'message' => 'Contact not found']);
+            }
+        } catch (Exception $e) {
+            echo json_encode([
+                'success' => false,
+                'message' => $e->getMessage()
+            ]);
+        }
+        
+        $this->app->close();
+    }
+
+    /**
+     * Method to save delivery address asynchronously (AJAX)
+     *
+     * @return  void
+     */
+    public function saveDeliveryAddressAsync()
+    {
+        if (!Session::checkToken()) {
+            echo json_encode(['success' => false, 'message' => 'Invalid token']);
+            $this->app->close();
+        }
+
+        $user = Factory::getUser();
+        
+        if ($user->guest) {
+            echo json_encode(['success' => false, 'message' => 'Unauthorized']);
+            $this->app->close();
+        }
+
+        $parentId = $this->input->getInt('parent_id', 0);
+        $name = $this->input->getString('name', '');
+        $street = $this->input->getString('street', '');
+        $city = $this->input->getString('city', '');
+        $agent = $this->input->getString('x_studio_agente_de_ventas', '');
+        
+        if ($parentId <= 0 || empty($name) || empty($street) || empty($city)) {
+            echo json_encode(['success' => false, 'message' => 'Missing required fields']);
+            $this->app->close();
+        }
+
+        try {
+            $model = $this->getModel('Contact');
+            $addressData = [
+                'parent_id' => $parentId,
+                'name' => $name,
+                'street' => $street,
+                'city' => $city,
+                'type' => 'delivery',
+                'x_studio_agente_de_ventas' => $agent
+            ];
+            
+            $result = $model->createContact($addressData);
+            
+            if ($result !== false) {
+                echo json_encode([
+                    'success' => true,
+                    'message' => 'Delivery address saved successfully',
+                    'address_id' => $result
+                ]);
+            } else {
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'Failed to save delivery address'
+                ]);
+            }
+        } catch (Exception $e) {
+            echo json_encode([
+                'success' => false,
+                'message' => $e->getMessage()
+            ]);
+        }
+        
+        $this->app->close();
+    }
+
+    /**
      * Method to save child contact asynchronously (AJAX)
      *
      * @return  void
