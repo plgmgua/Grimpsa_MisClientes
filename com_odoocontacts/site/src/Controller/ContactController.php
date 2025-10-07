@@ -297,4 +297,69 @@ class ContactController extends FormController
         
         $this->app->close();
     }
+
+    /**
+     * Method to save child contact asynchronously (AJAX)
+     *
+     * @return  void
+     */
+    public function saveChildContactAsync()
+    {
+        // Check for request forgeries
+        if (!Session::checkToken()) {
+            echo json_encode(['success' => false, 'message' => 'Invalid token']);
+            $this->app->close();
+        }
+
+        $user = Factory::getUser();
+        
+        if ($user->guest) {
+            echo json_encode(['success' => false, 'message' => 'Unauthorized']);
+            $this->app->close();
+        }
+
+        $parentId = $this->input->getInt('parent_id', 0);
+        $name = $this->input->getString('name', '');
+        $phone = $this->input->getString('phone', '');
+        $type = $this->input->getString('type', 'contact');
+        $agent = $this->input->getString('x_studio_agente_de_ventas', '');
+        
+        if ($parentId <= 0 || empty($name) || empty($phone)) {
+            echo json_encode(['success' => false, 'message' => 'Missing required fields']);
+            $this->app->close();
+        }
+
+        try {
+            $model = $this->getModel('Contact');
+            $contactData = [
+                'parent_id' => $parentId,
+                'name' => $name,
+                'phone' => $phone,
+                'type' => $type,
+                'x_studio_agente_de_ventas' => $agent
+            ];
+            
+            $result = $model->createContact($contactData);
+            
+            if ($result !== false) {
+                echo json_encode([
+                    'success' => true,
+                    'message' => 'Contact saved successfully',
+                    'contact_id' => $result
+                ]);
+            } else {
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'Failed to save contact'
+                ]);
+            }
+        } catch (Exception $e) {
+            echo json_encode([
+                'success' => false,
+                'message' => $e->getMessage()
+            ]);
+        }
+        
+        $this->app->close();
+    }
 }

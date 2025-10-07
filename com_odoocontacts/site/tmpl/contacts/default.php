@@ -381,19 +381,58 @@ function safeGet($array, $key, $default = '') {
                 <div id="otStep2" style="display: none;">
                     <div class="alert alert-info">
                         <i class="fas fa-info-circle"></i>
-                        Seleccione la persona de contacto para esta orden de trabajo.
+                        Seleccione o ingrese la persona de contacto para esta orden de trabajo.
                     </div>
                     
-                    <!-- Contact Selection -->
-                    <div class="mb-3">
+                    <!-- Contact Selection Dropdown -->
+                    <div id="otContactDropdownSection" class="mb-3">
                         <label for="otContactSelect" class="form-label">
-                            <i class="fas fa-user-tie"></i> Persona de Contacto *
+                            <i class="fas fa-user-tie"></i> Persona de Contacto
                         </label>
-                        <select id="otContactSelect" class="form-select" required>
+                        <select id="otContactSelect" class="form-select">
                             <option value="">Seleccione un contacto...</option>
                         </select>
                         <div class="form-text">
-                            Seleccione la persona de contacto en el sitio de entrega.
+                            Seleccione una persona de contacto existente o ingrese una nueva abajo.
+                        </div>
+                    </div>
+                    
+                    <!-- OR Divider -->
+                    <div class="text-center mb-3">
+                        <span class="badge bg-secondary">O</span>
+                    </div>
+                    
+                    <!-- Manual Contact Input -->
+                    <div class="card mb-3">
+                        <div class="card-header bg-light">
+                            <h6 class="mb-0"><i class="fas fa-user-plus"></i> Ingresar Nuevo Contacto</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="otManualContactName" class="form-label">Nombre *</label>
+                                        <input type="text" id="otManualContactName" class="form-control" 
+                                               placeholder="Nombre de la persona de contacto" />
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="otManualContactPhone" class="form-label">Teléfono *</label>
+                                        <input type="tel" id="otManualContactPhone" class="form-control" 
+                                               placeholder="Teléfono de contacto" />
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="otSaveContactToOdoo" value="1">
+                                <label class="form-check-label" for="otSaveContactToOdoo">
+                                    <i class="fas fa-save"></i> Agregar contacto a cliente
+                                </label>
+                                <div class="form-text">
+                                    Marque esta opción para guardar este contacto como hijo del cliente en Odoo.
+                                </div>
+                            </div>
                         </div>
                     </div>
                     
@@ -591,7 +630,7 @@ function populateContactPersons() {
     select.innerHTML = '<option value="">Seleccione un contacto...</option>';
     
     if (otChildContacts.length === 0) {
-        select.innerHTML = '<option value="">No hay contactos disponibles</option>';
+        select.innerHTML = '<option value="">No hay contactos disponibles - use campos manuales abajo</option>';
         return;
     }
     
@@ -599,7 +638,7 @@ function populateContactPersons() {
     var contactPersons = otChildContacts.filter(c => c.type === 'contact');
     
     if (contactPersons.length === 0) {
-        select.innerHTML = '<option value="">No hay personas de contacto disponibles</option>';
+        select.innerHTML = '<option value="">No hay personas de contacto - use campos manuales abajo</option>';
         return;
     }
     
@@ -612,10 +651,16 @@ function populateContactPersons() {
         select.appendChild(option);
     });
     
-    // Handle contact selection
+    // Handle contact selection - clear manual inputs when dropdown is used
     select.addEventListener('change', function() {
         var selectedOption = this.options[this.selectedIndex];
         if (selectedOption.value) {
+            // Clear manual inputs
+            document.getElementById('otManualContactName').value = '';
+            document.getElementById('otManualContactPhone').value = '';
+            document.getElementById('otSaveContactToOdoo').checked = false;
+            
+            // Set selected contact data
             document.getElementById('otSelectedContactName').value = selectedOption.dataset.name;
             document.getElementById('otSelectedContactPhone').value = selectedOption.dataset.phone;
             document.getElementById('otPreviewContactName').textContent = selectedOption.dataset.name || 'N/A';
@@ -626,6 +671,31 @@ function populateContactPersons() {
         }
     });
 }
+
+// Setup manual contact input listeners
+document.addEventListener('DOMContentLoaded', function() {
+    // Clear dropdown when manual inputs are used
+    var manualNameInput = document.getElementById('otManualContactName');
+    var manualPhoneInput = document.getElementById('otManualContactPhone');
+    
+    if (manualNameInput) {
+        manualNameInput.addEventListener('input', function() {
+            if (this.value) {
+                document.getElementById('otContactSelect').value = '';
+                document.getElementById('otContactPreview').style.display = 'none';
+            }
+        });
+    }
+    
+    if (manualPhoneInput) {
+        manualPhoneInput.addEventListener('input', function() {
+            if (this.value) {
+                document.getElementById('otContactSelect').value = '';
+                document.getElementById('otContactPreview').style.display = 'none';
+            }
+        });
+    }
+});
 
 // Navigate to Step 2
 function goToStep2() {
@@ -679,28 +749,46 @@ function goToStep1() {
 
 // Submit OT Form
 function submitOT() {
-    // Validate Step 2 required fields
+    var clientId = document.getElementById('otClientId').value;
     var contactSelect = document.getElementById('otContactSelect');
-    if (!contactSelect.value) {
-        alert('Por favor seleccione una persona de contacto antes de crear la orden de trabajo.');
+    var manualName = document.getElementById('otManualContactName').value.trim();
+    var manualPhone = document.getElementById('otManualContactPhone').value.trim();
+    var saveToOdoo = document.getElementById('otSaveContactToOdoo').checked;
+    
+    var contactName = '';
+    var contactPhone = '';
+    
+    // Determine if using dropdown or manual input
+    if (contactSelect.value) {
+        // Using dropdown
+        contactName = document.getElementById('otSelectedContactName').value;
+        contactPhone = document.getElementById('otSelectedContactPhone').value;
+    } else if (manualName && manualPhone) {
+        // Using manual input
+        contactName = manualName;
+        contactPhone = manualPhone;
+    } else {
+        alert('Por favor seleccione un contacto o ingrese nombre y teléfono manualmente.');
         return;
     }
     
     // Get all form data
-    var clientId = document.getElementById('otClientId').value;
     var clientName = document.getElementById('otClientName').textContent;
     var clientVat = document.getElementById('otClientVat').textContent;
     var deliveryStreet = document.getElementById('otSelectedStreet').value;
     var deliveryCity = document.getElementById('otSelectedCity').value;
     var instructions = document.getElementById('otDeliveryInstructions').value;
     var agentName = document.getElementById('otAgentName').textContent;
-    var contactName = document.getElementById('otSelectedContactName').value;
-    var contactPhone = document.getElementById('otSelectedContactPhone').value;
     
     // Merge street and city into single delivery address
     var deliveryAddress = deliveryStreet;
     if (deliveryCity) {
         deliveryAddress += (deliveryStreet ? ', ' : '') + deliveryCity;
+    }
+    
+    // If checkbox is checked and using manual input, save to Odoo asynchronously
+    if (saveToOdoo && manualName && manualPhone) {
+        saveContactToOdooAsync(clientId, manualName, manualPhone, agentName);
     }
     
     // Build URL with all parameters including contact info
@@ -716,6 +804,33 @@ function submitOT() {
     
     // Open URL in same window
     window.location.href = url;
+}
+
+// Save contact to Odoo asynchronously
+function saveContactToOdooAsync(parentId, contactName, contactPhone, agentName) {
+    // Send async request to save contact
+    var formData = new FormData();
+    formData.append('parent_id', parentId);
+    formData.append('name', contactName);
+    formData.append('phone', contactPhone);
+    formData.append('type', 'contact');
+    formData.append('x_studio_agente_de_ventas', agentName);
+    formData.append('<?php echo Session::getFormToken(); ?>', '1');
+    
+    fetch('<?php echo Route::_("index.php?option=com_odoocontacts&task=contact.saveChildContactAsync&format=json"); ?>', {
+        method: 'POST',
+        body: formData
+    }).then(response => response.json())
+      .then(data => {
+          if (data.success) {
+              console.log('Contact saved to Odoo successfully');
+          } else {
+              console.error('Failed to save contact to Odoo:', data.message);
+          }
+      })
+      .catch(error => {
+          console.error('Error saving contact to Odoo:', error);
+      });
 }
 
 function deleteContact(contactId, contactName) {
