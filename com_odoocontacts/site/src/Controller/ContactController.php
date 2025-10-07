@@ -257,4 +257,44 @@ class ContactController extends FormController
         $this->setRedirect(Route::_('index.php?option=com_odoocontacts&view=contacts'));
         return true;
     }
+
+    /**
+     * Method to get child contacts for OT modal (AJAX)
+     *
+     * @return  void
+     */
+    public function getChildContacts()
+    {
+        $user = Factory::getUser();
+        
+        if ($user->guest) {
+            echo json_encode(['success' => false, 'message' => 'Unauthorized']);
+            $this->app->close();
+        }
+
+        $clientId = $this->input->getInt('id', 0);
+        
+        if ($clientId <= 0) {
+            echo json_encode(['success' => false, 'message' => 'Invalid client ID']);
+            $this->app->close();
+        }
+
+        try {
+            $helper = new \Grimpsa\Component\OdooContacts\Site\Helper\OdooHelper();
+            $childContacts = $helper->getChildContacts($clientId);
+            
+            echo json_encode([
+                'success' => true,
+                'data' => $childContacts
+            ]);
+        } catch (Exception $e) {
+            echo json_encode([
+                'success' => false,
+                'message' => $e->getMessage(),
+                'data' => []
+            ]);
+        }
+        
+        $this->app->close();
+    }
 }

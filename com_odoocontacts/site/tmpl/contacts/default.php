@@ -216,6 +216,13 @@ function safeGet($array, $key, $default = '') {
                                         <i class="fas fa-edit"></i>
                                     </a>
                                     
+                                    <button type="button" 
+                                            class="btn btn-outline-success" 
+                                            onclick="openOTModal(<?php echo (int)safeGet($item, 'id', 0); ?>, '<?php echo addslashes(safeGet($item, 'name', 'Sin nombre')); ?>', '<?php echo addslashes(safeGet($item, 'vat', '')); ?>')" 
+                                            title="Orden de Trabajo">
+                                        <i class="fas fa-truck"></i> OT
+                                    </button>
+                                    
                                     <a href="<?php echo Route::_('index.php?option=com_odoocontacts&view=newaction&id=' . (int)safeGet($item, 'id', 0)); ?>" 
                                        class="btn btn-outline-info" 
                                        title="Nueva Acción">
@@ -285,6 +292,98 @@ function safeGet($array, $key, $default = '') {
     </div>
 </div>
 
+<!-- OT (Orden de Trabajo) Modal -->
+<div class="modal fade" id="otModal" tabindex="-1" aria-labelledby="otModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title" id="otModalLabel">
+                    <i class="fas fa-truck"></i> Crear Orden de Trabajo
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle"></i>
+                    Seleccione la dirección de entrega y agregue instrucciones para crear la orden de trabajo.
+                </div>
+                
+                <!-- Client Information (Read-only) -->
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <h6 class="mb-0"><i class="fas fa-user"></i> Información del Cliente</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <strong>Cliente:</strong>
+                                <p id="otClientName" class="mb-2"></p>
+                            </div>
+                            <div class="col-md-6">
+                                <strong>NIT:</strong>
+                                <p id="otClientVat" class="mb-2"></p>
+                            </div>
+                            <div class="col-md-12">
+                                <strong>Agente de Ventas:</strong>
+                                <p id="otAgentName" class="mb-0"><?php echo htmlspecialchars($user->name); ?></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Delivery Address Selection -->
+                <div class="mb-3">
+                    <label for="otDeliveryAddress" class="form-label">
+                        <i class="fas fa-map-marker-alt"></i> Dirección de Entrega *
+                    </label>
+                    <select id="otDeliveryAddress" class="form-select" required>
+                        <option value="">Seleccione una dirección...</option>
+                    </select>
+                    <div class="form-text">
+                        Se mostrarán primero las direcciones de entrega, luego otras direcciones si no hay direcciones de entrega disponibles.
+                    </div>
+                </div>
+                
+                <!-- Address Preview -->
+                <div id="otAddressPreview" class="card mb-3" style="display: none;">
+                    <div class="card-header bg-light">
+                        <h6 class="mb-0"><i class="fas fa-location-arrow"></i> Dirección Seleccionada</h6>
+                    </div>
+                    <div class="card-body">
+                        <p class="mb-1"><strong>Calle:</strong> <span id="otPreviewStreet"></span></p>
+                        <p class="mb-0"><strong>Ciudad:</strong> <span id="otPreviewCity"></span></p>
+                    </div>
+                </div>
+                
+                <!-- Delivery Instructions -->
+                <div class="mb-3">
+                    <label for="otDeliveryInstructions" class="form-label">
+                        <i class="fas fa-clipboard-list"></i> Instrucciones de Entrega
+                    </label>
+                    <textarea id="otDeliveryInstructions" class="form-control" rows="4" 
+                              placeholder="Ingrese instrucciones especiales para la entrega..."></textarea>
+                    <div class="form-text">
+                        Opcional: Agregue cualquier instrucción especial para la entrega (horario, contacto, etc.)
+                    </div>
+                </div>
+                
+                <!-- Hidden fields for form data -->
+                <input type="hidden" id="otClientId" value="" />
+                <input type="hidden" id="otSelectedStreet" value="" />
+                <input type="hidden" id="otSelectedCity" value="" />
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times"></i> Cancelar
+                </button>
+                <button type="button" class="btn btn-success" onclick="submitOT()">
+                    <i class="fas fa-check"></i> Crear Orden de Trabajo
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Delete Confirmation Modal -->
 <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
     <div class="modal-dialog">
@@ -312,6 +411,135 @@ function safeGet($array, $key, $default = '') {
 </div>
 
 <script>
+// OT Modal Variables
+var otChildContacts = [];
+var otDestinationUrl = '<?php echo $this->params->get('ot_destination_url', 'https://grimpsa_webserver.grantsolutions.cc/index.php/orden-de-trabajo'); ?>';
+
+// Open OT Modal
+function openOTModal(clientId, clientName, clientVat) {
+    // Set client information
+    document.getElementById('otClientId').value = clientId;
+    document.getElementById('otClientName').textContent = clientName;
+    document.getElementById('otClientVat').textContent = clientVat || 'N/A';
+    
+    // Clear previous selections
+    document.getElementById('otDeliveryAddress').innerHTML = '<option value="">Cargando direcciones...</option>';
+    document.getElementById('otDeliveryInstructions').value = '';
+    document.getElementById('otAddressPreview').style.display = 'none';
+    
+    // Load child contacts via AJAX
+    loadChildContacts(clientId);
+    
+    // Show modal
+    var otModal = new bootstrap.Modal(document.getElementById('otModal'));
+    otModal.show();
+}
+
+// Load child contacts for the selected client
+function loadChildContacts(clientId) {
+    // Make AJAX call to get child contacts
+    fetch('<?php echo Route::_("index.php?option=com_odoocontacts&task=contact.getChildContacts&format=json"); ?>&id=' + clientId)
+        .then(response => response.json())
+        .then(data => {
+            otChildContacts = data.data || [];
+            populateDeliveryAddresses();
+        })
+        .catch(error => {
+            console.error('Error loading child contacts:', error);
+            document.getElementById('otDeliveryAddress').innerHTML = '<option value="">Error al cargar direcciones</option>';
+        });
+}
+
+// Populate delivery address dropdown
+function populateDeliveryAddresses() {
+    var select = document.getElementById('otDeliveryAddress');
+    select.innerHTML = '<option value="">Seleccione una dirección...</option>';
+    
+    if (otChildContacts.length === 0) {
+        select.innerHTML = '<option value="">No hay direcciones disponibles</option>';
+        return;
+    }
+    
+    // Sort: delivery addresses first, then others
+    var deliveryAddresses = otChildContacts.filter(c => c.type === 'delivery');
+    var otherAddresses = otChildContacts.filter(c => c.type !== 'delivery');
+    
+    // Add delivery addresses
+    if (deliveryAddresses.length > 0) {
+        var deliveryGroup = document.createElement('optgroup');
+        deliveryGroup.label = 'Direcciones de Entrega';
+        deliveryAddresses.forEach(function(contact) {
+            var option = document.createElement('option');
+            option.value = contact.id;
+            option.textContent = contact.name + ' - ' + (contact.street || 'Sin dirección');
+            option.dataset.street = contact.street || '';
+            option.dataset.city = contact.city || '';
+            deliveryGroup.appendChild(option);
+        });
+        select.appendChild(deliveryGroup);
+    }
+    
+    // Add other addresses if no delivery addresses exist
+    if (deliveryAddresses.length === 0 && otherAddresses.length > 0) {
+        var otherGroup = document.createElement('optgroup');
+        otherGroup.label = 'Otras Direcciones';
+        otherAddresses.forEach(function(contact) {
+            var option = document.createElement('option');
+            option.value = contact.id;
+            option.textContent = contact.name + ' - ' + (contact.street || 'Sin dirección');
+            option.dataset.street = contact.street || '';
+            option.dataset.city = contact.city || '';
+            otherGroup.appendChild(option);
+        });
+        select.appendChild(otherGroup);
+    }
+    
+    // Handle address selection
+    select.addEventListener('change', function() {
+        var selectedOption = this.options[this.selectedIndex];
+        if (selectedOption.value) {
+            document.getElementById('otSelectedStreet').value = selectedOption.dataset.street;
+            document.getElementById('otSelectedCity').value = selectedOption.dataset.city;
+            document.getElementById('otPreviewStreet').textContent = selectedOption.dataset.street || 'N/A';
+            document.getElementById('otPreviewCity').textContent = selectedOption.dataset.city || 'N/A';
+            document.getElementById('otAddressPreview').style.display = 'block';
+        } else {
+            document.getElementById('otAddressPreview').style.display = 'none';
+        }
+    });
+}
+
+// Submit OT Form
+function submitOT() {
+    // Validate required fields
+    var clientId = document.getElementById('otClientId').value;
+    var clientName = document.getElementById('otClientName').textContent;
+    var clientVat = document.getElementById('otClientVat').textContent;
+    var deliverySelect = document.getElementById('otDeliveryAddress');
+    var deliveryStreet = document.getElementById('otSelectedStreet').value;
+    var deliveryCity = document.getElementById('otSelectedCity').value;
+    var instructions = document.getElementById('otDeliveryInstructions').value;
+    var agentName = document.getElementById('otAgentName').textContent;
+    
+    if (!deliverySelect.value) {
+        alert('Por favor seleccione una dirección de entrega.');
+        return;
+    }
+    
+    // Build URL with parameters
+    var url = otDestinationUrl;
+    url += '?client_id=' + encodeURIComponent(clientId);
+    url += '&contact_name=' + encodeURIComponent(clientName);
+    url += '&contact_vat=' + encodeURIComponent(clientVat);
+    url += '&x_studio_agente_de_ventas=' + encodeURIComponent(agentName);
+    url += '&delivery_street=' + encodeURIComponent(deliveryStreet);
+    url += '&delivery_city=' + encodeURIComponent(deliveryCity);
+    url += '&instrucciones_entrega=' + encodeURIComponent(instructions);
+    
+    // Open URL in same window
+    window.location.href = url;
+}
+
 function deleteContact(contactId, contactName) {
     document.getElementById('deleteContactId').value = contactId;
     document.getElementById('deleteContactName').textContent = contactName;
