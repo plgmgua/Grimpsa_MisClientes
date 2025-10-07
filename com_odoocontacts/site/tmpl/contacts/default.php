@@ -526,14 +526,19 @@ function submitOT() {
         return;
     }
     
+    // Merge street and city into single delivery address
+    var deliveryAddress = deliveryStreet;
+    if (deliveryCity) {
+        deliveryAddress += (deliveryStreet ? ', ' : '') + deliveryCity;
+    }
+    
     // Build URL with parameters
     var url = otDestinationUrl;
     url += '?client_id=' + encodeURIComponent(clientId);
     url += '&contact_name=' + encodeURIComponent(clientName);
     url += '&contact_vat=' + encodeURIComponent(clientVat);
     url += '&x_studio_agente_de_ventas=' + encodeURIComponent(agentName);
-    url += '&delivery_street=' + encodeURIComponent(deliveryStreet);
-    url += '&delivery_city=' + encodeURIComponent(deliveryCity);
+    url += '&delivery_address=' + encodeURIComponent(deliveryAddress);
     url += '&instrucciones_entrega=' + encodeURIComponent(instructions);
     
     // Open URL in same window
