@@ -292,78 +292,131 @@ function safeGet($array, $key, $default = '') {
     </div>
 </div>
 
-<!-- OT (Orden de Trabajo) Modal -->
+<!-- OT (Orden de Trabajo) Modal - Two Step Wizard -->
 <div class="modal fade" id="otModal" tabindex="-1" aria-labelledby="otModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header bg-success text-white">
                 <h5 class="modal-title" id="otModalLabel">
-                    <i class="fas fa-truck"></i> Crear Orden de Trabajo
+                    <i class="fas fa-truck"></i> Crear Orden de Trabajo <span id="otStepIndicator">(Paso 1 de 2)</span>
                 </h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <div class="alert alert-info">
-                    <i class="fas fa-info-circle"></i>
-                    Seleccione la dirección de entrega y agregue instrucciones para crear la orden de trabajo.
+                <!-- Progress Bar -->
+                <div class="progress mb-4" style="height: 25px;">
+                    <div id="otProgressBar" class="progress-bar bg-success" role="progressbar" style="width: 50%;" aria-valuenow="50" aria-valuemin="0" aria-valuemax="100">
+                        Paso 1: Dirección de Entrega
+                    </div>
                 </div>
                 
-                <!-- Client Information (Read-only) -->
-                <div class="card mb-3">
-                    <div class="card-header">
-                        <h6 class="mb-0"><i class="fas fa-user"></i> Información del Cliente</h6>
+                <!-- Step 1: Delivery Information -->
+                <div id="otStep1" style="display: block;">
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i>
+                        Seleccione la dirección de entrega y agregue instrucciones.
                     </div>
-                    <div class="card-body">
-                        <div class="row">
-                            <div class="col-md-6">
-                                <strong>Cliente:</strong>
-                                <p id="otClientName" class="mb-2"></p>
+                    
+                    <!-- Client Information (Read-only) -->
+                    <div class="card mb-3">
+                        <div class="card-header">
+                            <h6 class="mb-0"><i class="fas fa-user"></i> Información del Cliente</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <strong>Cliente:</strong>
+                                    <p id="otClientName" class="mb-2"></p>
+                                </div>
+                                <div class="col-md-6">
+                                    <strong>NIT:</strong>
+                                    <p id="otClientVat" class="mb-2"></p>
+                                </div>
+                                <div class="col-md-12">
+                                    <strong>Agente de Ventas:</strong>
+                                    <p id="otAgentName" class="mb-0"><?php echo htmlspecialchars($user->name); ?></p>
+                                </div>
                             </div>
-                            <div class="col-md-6">
-                                <strong>NIT:</strong>
-                                <p id="otClientVat" class="mb-2"></p>
-                            </div>
-                            <div class="col-md-12">
-                                <strong>Agente de Ventas:</strong>
-                                <p id="otAgentName" class="mb-0"><?php echo htmlspecialchars($user->name); ?></p>
-                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Delivery Address Selection -->
+                    <div class="mb-3">
+                        <label for="otDeliveryAddress" class="form-label">
+                            <i class="fas fa-map-marker-alt"></i> Dirección de Entrega *
+                        </label>
+                        <select id="otDeliveryAddress" class="form-select" required>
+                            <option value="">Seleccione una dirección...</option>
+                        </select>
+                        <div class="form-text">
+                            Se mostrarán primero las direcciones de entrega, luego otras direcciones si no hay direcciones de entrega disponibles.
+                        </div>
+                    </div>
+                    
+                    <!-- Address Preview -->
+                    <div id="otAddressPreview" class="card mb-3" style="display: none;">
+                        <div class="card-header bg-light">
+                            <h6 class="mb-0"><i class="fas fa-location-arrow"></i> Dirección Seleccionada</h6>
+                        </div>
+                        <div class="card-body">
+                            <p class="mb-1"><strong>Calle:</strong> <span id="otPreviewStreet"></span></p>
+                            <p class="mb-0"><strong>Ciudad:</strong> <span id="otPreviewCity"></span></p>
+                        </div>
+                    </div>
+                    
+                    <!-- Delivery Instructions -->
+                    <div class="mb-3">
+                        <label for="otDeliveryInstructions" class="form-label">
+                            <i class="fas fa-clipboard-list"></i> Instrucciones de Entrega
+                        </label>
+                        <textarea id="otDeliveryInstructions" class="form-control" rows="4" 
+                                  placeholder="Ingrese instrucciones especiales para la entrega..."></textarea>
+                        <div class="form-text">
+                            Opcional: Agregue cualquier instrucción especial para la entrega (horario, contacto, etc.)
                         </div>
                     </div>
                 </div>
                 
-                <!-- Delivery Address Selection -->
-                <div class="mb-3">
-                    <label for="otDeliveryAddress" class="form-label">
-                        <i class="fas fa-map-marker-alt"></i> Dirección de Entrega *
-                    </label>
-                    <select id="otDeliveryAddress" class="form-select" required>
-                        <option value="">Seleccione una dirección...</option>
-                    </select>
-                    <div class="form-text">
-                        Se mostrarán primero las direcciones de entrega, luego otras direcciones si no hay direcciones de entrega disponibles.
+                <!-- Step 2: Contact Selection -->
+                <div id="otStep2" style="display: none;">
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i>
+                        Seleccione la persona de contacto para esta orden de trabajo.
                     </div>
-                </div>
-                
-                <!-- Address Preview -->
-                <div id="otAddressPreview" class="card mb-3" style="display: none;">
-                    <div class="card-header bg-light">
-                        <h6 class="mb-0"><i class="fas fa-location-arrow"></i> Dirección Seleccionada</h6>
+                    
+                    <!-- Contact Selection -->
+                    <div class="mb-3">
+                        <label for="otContactSelect" class="form-label">
+                            <i class="fas fa-user-tie"></i> Persona de Contacto *
+                        </label>
+                        <select id="otContactSelect" class="form-select" required>
+                            <option value="">Seleccione un contacto...</option>
+                        </select>
+                        <div class="form-text">
+                            Seleccione la persona de contacto en el sitio de entrega.
+                        </div>
                     </div>
-                    <div class="card-body">
-                        <p class="mb-1"><strong>Calle:</strong> <span id="otPreviewStreet"></span></p>
-                        <p class="mb-0"><strong>Ciudad:</strong> <span id="otPreviewCity"></span></p>
+                    
+                    <!-- Contact Preview -->
+                    <div id="otContactPreview" class="card mb-3" style="display: none;">
+                        <div class="card-header bg-light">
+                            <h6 class="mb-0"><i class="fas fa-address-card"></i> Contacto Seleccionado</h6>
+                        </div>
+                        <div class="card-body">
+                            <p class="mb-1"><strong>Nombre:</strong> <span id="otPreviewContactName"></span></p>
+                            <p class="mb-0"><strong>Teléfono:</strong> <span id="otPreviewContactPhone"></span></p>
+                        </div>
                     </div>
-                </div>
-                
-                <!-- Delivery Instructions -->
-                <div class="mb-3">
-                    <label for="otDeliveryInstructions" class="form-label">
-                        <i class="fas fa-clipboard-list"></i> Instrucciones de Entrega
-                    </label>
-                    <textarea id="otDeliveryInstructions" class="form-control" rows="4" 
-                              placeholder="Ingrese instrucciones especiales para la entrega..."></textarea>
-                    <div class="form-text">
-                        Opcional: Agregue cualquier instrucción especial para la entrega (horario, contacto, etc.)
+                    
+                    <!-- Summary Card -->
+                    <div class="card border-success">
+                        <div class="card-header bg-success text-white">
+                            <h6 class="mb-0"><i class="fas fa-clipboard-check"></i> Resumen de Orden de Trabajo</h6>
+                        </div>
+                        <div class="card-body">
+                            <p class="mb-1"><strong>Dirección de Entrega:</strong> <span id="otSummaryAddress"></span></p>
+                            <p class="mb-0"><strong>Instrucciones:</strong> <span id="otSummaryInstructions"></span></p>
+                        </div>
                     </div>
                 </div>
                 
@@ -371,12 +424,20 @@ function safeGet($array, $key, $default = '') {
                 <input type="hidden" id="otClientId" value="" />
                 <input type="hidden" id="otSelectedStreet" value="" />
                 <input type="hidden" id="otSelectedCity" value="" />
+                <input type="hidden" id="otSelectedContactName" value="" />
+                <input type="hidden" id="otSelectedContactPhone" value="" />
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
                     <i class="fas fa-times"></i> Cancelar
                 </button>
-                <button type="button" class="btn btn-success" onclick="submitOT()">
+                <button type="button" id="otBtnBack" class="btn btn-outline-secondary" onclick="goToStep1()" style="display: none;">
+                    <i class="fas fa-arrow-left"></i> Atrás
+                </button>
+                <button type="button" id="otBtnNext" class="btn btn-primary" onclick="goToStep2()">
+                    <i class="fas fa-arrow-right"></i> Siguiente
+                </button>
+                <button type="button" id="otBtnSubmit" class="btn btn-success" onclick="submitOT()" style="display: none;">
                     <i class="fas fa-check"></i> Crear Orden de Trabajo
                 </button>
             </div>
@@ -426,6 +487,18 @@ function openOTModal(clientId, clientName, clientVat) {
     document.getElementById('otDeliveryAddress').innerHTML = '<option value="">Cargando direcciones...</option>';
     document.getElementById('otDeliveryInstructions').value = '';
     document.getElementById('otAddressPreview').style.display = 'none';
+    document.getElementById('otContactSelect').innerHTML = '<option value="">Seleccione un contacto...</option>';
+    document.getElementById('otContactPreview').style.display = 'none';
+    
+    // Reset to Step 1
+    document.getElementById('otStep1').style.display = 'block';
+    document.getElementById('otStep2').style.display = 'none';
+    document.getElementById('otBtnNext').style.display = 'inline-block';
+    document.getElementById('otBtnBack').style.display = 'none';
+    document.getElementById('otBtnSubmit').style.display = 'none';
+    document.getElementById('otProgressBar').style.width = '50%';
+    document.getElementById('otProgressBar').textContent = 'Paso 1: Dirección de Entrega';
+    document.getElementById('otStepIndicator').textContent = '(Paso 1 de 2)';
     
     // Load child contacts via AJAX
     loadChildContacts(clientId);
@@ -507,24 +580,122 @@ function populateDeliveryAddresses() {
             document.getElementById('otAddressPreview').style.display = 'none';
         }
     });
+    
+    // Also populate contact persons for step 2
+    populateContactPersons();
+}
+
+// Populate contact persons dropdown (type = 'contact')
+function populateContactPersons() {
+    var select = document.getElementById('otContactSelect');
+    select.innerHTML = '<option value="">Seleccione un contacto...</option>';
+    
+    if (otChildContacts.length === 0) {
+        select.innerHTML = '<option value="">No hay contactos disponibles</option>';
+        return;
+    }
+    
+    // Filter only 'contact' type
+    var contactPersons = otChildContacts.filter(c => c.type === 'contact');
+    
+    if (contactPersons.length === 0) {
+        select.innerHTML = '<option value="">No hay personas de contacto disponibles</option>';
+        return;
+    }
+    
+    contactPersons.forEach(function(contact) {
+        var option = document.createElement('option');
+        option.value = contact.id;
+        option.textContent = contact.name;
+        option.dataset.name = contact.name || '';
+        option.dataset.phone = contact.phone || contact.mobile || '';
+        select.appendChild(option);
+    });
+    
+    // Handle contact selection
+    select.addEventListener('change', function() {
+        var selectedOption = this.options[this.selectedIndex];
+        if (selectedOption.value) {
+            document.getElementById('otSelectedContactName').value = selectedOption.dataset.name;
+            document.getElementById('otSelectedContactPhone').value = selectedOption.dataset.phone;
+            document.getElementById('otPreviewContactName').textContent = selectedOption.dataset.name || 'N/A';
+            document.getElementById('otPreviewContactPhone').textContent = selectedOption.dataset.phone || 'N/A';
+            document.getElementById('otContactPreview').style.display = 'block';
+        } else {
+            document.getElementById('otContactPreview').style.display = 'none';
+        }
+    });
+}
+
+// Navigate to Step 2
+function goToStep2() {
+    // Validate Step 1
+    var deliverySelect = document.getElementById('otDeliveryAddress');
+    if (!deliverySelect.value) {
+        alert('Por favor seleccione una dirección de entrega antes de continuar.');
+        return;
+    }
+    
+    // Update summary
+    var deliveryStreet = document.getElementById('otSelectedStreet').value;
+    var deliveryCity = document.getElementById('otSelectedCity').value;
+    var deliveryAddress = deliveryStreet + (deliveryCity ? ', ' + deliveryCity : '');
+    var instructions = document.getElementById('otDeliveryInstructions').value || 'Ninguna';
+    
+    document.getElementById('otSummaryAddress').textContent = deliveryAddress;
+    document.getElementById('otSummaryInstructions').textContent = instructions;
+    
+    // Hide Step 1, Show Step 2
+    document.getElementById('otStep1').style.display = 'none';
+    document.getElementById('otStep2').style.display = 'block';
+    
+    // Update buttons
+    document.getElementById('otBtnNext').style.display = 'none';
+    document.getElementById('otBtnBack').style.display = 'inline-block';
+    document.getElementById('otBtnSubmit').style.display = 'inline-block';
+    
+    // Update progress bar
+    document.getElementById('otProgressBar').style.width = '100%';
+    document.getElementById('otProgressBar').textContent = 'Paso 2: Persona de Contacto';
+    document.getElementById('otStepIndicator').textContent = '(Paso 2 de 2)';
+}
+
+// Navigate back to Step 1
+function goToStep1() {
+    // Hide Step 2, Show Step 1
+    document.getElementById('otStep2').style.display = 'none';
+    document.getElementById('otStep1').style.display = 'block';
+    
+    // Update buttons
+    document.getElementById('otBtnNext').style.display = 'inline-block';
+    document.getElementById('otBtnBack').style.display = 'none';
+    document.getElementById('otBtnSubmit').style.display = 'none';
+    
+    // Update progress bar
+    document.getElementById('otProgressBar').style.width = '50%';
+    document.getElementById('otProgressBar').textContent = 'Paso 1: Dirección de Entrega';
+    document.getElementById('otStepIndicator').textContent = '(Paso 1 de 2)';
 }
 
 // Submit OT Form
 function submitOT() {
-    // Validate required fields
+    // Validate Step 2 required fields
+    var contactSelect = document.getElementById('otContactSelect');
+    if (!contactSelect.value) {
+        alert('Por favor seleccione una persona de contacto antes de crear la orden de trabajo.');
+        return;
+    }
+    
+    // Get all form data
     var clientId = document.getElementById('otClientId').value;
     var clientName = document.getElementById('otClientName').textContent;
     var clientVat = document.getElementById('otClientVat').textContent;
-    var deliverySelect = document.getElementById('otDeliveryAddress');
     var deliveryStreet = document.getElementById('otSelectedStreet').value;
     var deliveryCity = document.getElementById('otSelectedCity').value;
     var instructions = document.getElementById('otDeliveryInstructions').value;
     var agentName = document.getElementById('otAgentName').textContent;
-    
-    if (!deliverySelect.value) {
-        alert('Por favor seleccione una dirección de entrega.');
-        return;
-    }
+    var contactName = document.getElementById('otSelectedContactName').value;
+    var contactPhone = document.getElementById('otSelectedContactPhone').value;
     
     // Merge street and city into single delivery address
     var deliveryAddress = deliveryStreet;
@@ -532,7 +703,7 @@ function submitOT() {
         deliveryAddress += (deliveryStreet ? ', ' : '') + deliveryCity;
     }
     
-    // Build URL with parameters
+    // Build URL with all parameters including contact info
     var url = otDestinationUrl;
     url += '?client_id=' + encodeURIComponent(clientId);
     url += '&contact_name=' + encodeURIComponent(clientName);
@@ -540,6 +711,8 @@ function submitOT() {
     url += '&x_studio_agente_de_ventas=' + encodeURIComponent(agentName);
     url += '&delivery_address=' + encodeURIComponent(deliveryAddress);
     url += '&instrucciones_entrega=' + encodeURIComponent(instructions);
+    url += '&contact_person_name=' + encodeURIComponent(contactName);
+    url += '&contact_person_phone=' + encodeURIComponent(contactPhone);
     
     // Open URL in same window
     window.location.href = url;
