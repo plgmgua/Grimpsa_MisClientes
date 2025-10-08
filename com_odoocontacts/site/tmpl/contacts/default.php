@@ -589,6 +589,7 @@ function openOTModal(clientId, clientName, clientVat) {
     document.getElementById('otSaveAddressToOdoo').checked = false;
     document.getElementById('otDeliveryInstructions').value = '';
     document.getElementById('otAddressPreview').style.display = 'none';
+    document.getElementById('otSaveAddressButtonContainer').style.display = 'none';
     
     // Clear previous selections - contact
     document.getElementById('otContactSelect').innerHTML = '<option value="">Seleccione un contacto...</option>';
@@ -596,6 +597,7 @@ function openOTModal(clientId, clientName, clientVat) {
     document.getElementById('otManualContactPhone').value = '';
     document.getElementById('otSaveContactToOdoo').checked = false;
     document.getElementById('otContactPreview').style.display = 'none';
+    document.getElementById('otSaveContactButtonContainer').style.display = 'none';
     
     // Reset to Step 1
     document.getElementById('otStep1').style.display = 'block';
@@ -836,10 +838,14 @@ function toggleSaveAddressButton() {
     var city = document.getElementById('otManualCity').value.trim();
     var buttonContainer = document.getElementById('otSaveAddressButtonContainer');
     
+    console.log('Toggle Address Button - Checkbox:', checkbox.checked, 'Name:', name, 'Street:', street, 'City:', city);
+    
     // Show button only if checkbox is checked AND all manual fields have values
     if (checkbox.checked && name && street && city) {
+        console.log('Showing address save button');
         buttonContainer.style.display = 'block';
     } else {
+        console.log('Hiding address save button');
         buttonContainer.style.display = 'none';
     }
 }
@@ -851,10 +857,14 @@ function toggleSaveContactButton() {
     var phone = document.getElementById('otManualContactPhone').value.trim();
     var buttonContainer = document.getElementById('otSaveContactButtonContainer');
     
+    console.log('Toggle Contact Button - Checkbox:', checkbox.checked, 'Name:', name, 'Phone:', phone);
+    
     // Show button only if checkbox is checked AND all manual fields have values
     if (checkbox.checked && name && phone) {
+        console.log('Showing contact save button');
         buttonContainer.style.display = 'block';
     } else {
+        console.log('Hiding contact save button');
         buttonContainer.style.display = 'none';
     }
 }
