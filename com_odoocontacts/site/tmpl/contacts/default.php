@@ -401,7 +401,7 @@ function safeGet($array, $key, $default = '') {
                                     </div>
                                 </div>
                             </div>
-                            <div class="form-check">
+                            <div class="form-check mb-3">
                                 <input class="form-check-input" type="checkbox" id="otSaveAddressToOdoo" value="1">
                                 <label class="form-check-label" for="otSaveAddressToOdoo">
                                     <i class="fas fa-save"></i> Agregar dirección a cliente
@@ -409,6 +409,11 @@ function safeGet($array, $key, $default = '') {
                                 <div class="form-text">
                                     Marque esta opción para guardar esta dirección como hija del cliente en Odoo.
                                 </div>
+                            </div>
+                            <div id="otSaveAddressButtonContainer" style="display: none;">
+                                <button type="button" class="btn btn-success btn-sm" onclick="saveDeliveryAddressNow()">
+                                    <i class="fas fa-save"></i> Guardar Dirección
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -473,7 +478,7 @@ function safeGet($array, $key, $default = '') {
                                     </div>
                                 </div>
                             </div>
-                            <div class="form-check">
+                            <div class="form-check mb-3">
                                 <input class="form-check-input" type="checkbox" id="otSaveContactToOdoo" value="1">
                                 <label class="form-check-label" for="otSaveContactToOdoo">
                                     <i class="fas fa-save"></i> Agregar contacto a cliente
@@ -481,6 +486,11 @@ function safeGet($array, $key, $default = '') {
                                 <div class="form-text">
                                     Marque esta opción para guardar este contacto como hijo del cliente en Odoo.
                                 </div>
+                            </div>
+                            <div id="otSaveContactButtonContainer" style="display: none;">
+                                <button type="button" class="btn btn-success btn-sm" onclick="saveContactNow()">
+                                    <i class="fas fa-save"></i> Guardar Contacto
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -775,9 +785,17 @@ document.addEventListener('DOMContentLoaded', function() {
                     document.getElementById('otDeliveryAddress').value = '';
                     document.getElementById('otAddressPreview').style.display = 'none';
                 }
+                // Show/hide save button based on checkbox and manual inputs
+                toggleSaveAddressButton();
             });
         }
     });
+    
+    // Toggle save button when checkbox changes
+    var saveAddressCheckbox = document.getElementById('otSaveAddressToOdoo');
+    if (saveAddressCheckbox) {
+        saveAddressCheckbox.addEventListener('change', toggleSaveAddressButton);
+    }
     
     // Clear contact dropdown when manual contact inputs are used
     var manualNameInput = document.getElementById('otManualContactName');
@@ -789,6 +807,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 document.getElementById('otContactSelect').value = '';
                 document.getElementById('otContactPreview').style.display = 'none';
             }
+            toggleSaveContactButton();
         });
     }
     
@@ -798,9 +817,47 @@ document.addEventListener('DOMContentLoaded', function() {
                 document.getElementById('otContactSelect').value = '';
                 document.getElementById('otContactPreview').style.display = 'none';
             }
+            toggleSaveContactButton();
         });
     }
+    
+    // Toggle save button when checkbox changes
+    var saveContactCheckbox = document.getElementById('otSaveContactToOdoo');
+    if (saveContactCheckbox) {
+        saveContactCheckbox.addEventListener('change', toggleSaveContactButton);
+    }
 });
+
+// Toggle save address button visibility
+function toggleSaveAddressButton() {
+    var checkbox = document.getElementById('otSaveAddressToOdoo');
+    var name = document.getElementById('otManualAddressName').value.trim();
+    var street = document.getElementById('otManualStreet').value.trim();
+    var city = document.getElementById('otManualCity').value.trim();
+    var buttonContainer = document.getElementById('otSaveAddressButtonContainer');
+    
+    // Show button only if checkbox is checked AND all manual fields have values
+    if (checkbox.checked && name && street && city) {
+        buttonContainer.style.display = 'block';
+    } else {
+        buttonContainer.style.display = 'none';
+    }
+}
+
+// Toggle save contact button visibility
+function toggleSaveContactButton() {
+    var checkbox = document.getElementById('otSaveContactToOdoo');
+    var name = document.getElementById('otManualContactName').value.trim();
+    var phone = document.getElementById('otManualContactPhone').value.trim();
+    var buttonContainer = document.getElementById('otSaveContactButtonContainer');
+    
+    // Show button only if checkbox is checked AND all manual fields have values
+    if (checkbox.checked && name && phone) {
+        buttonContainer.style.display = 'block';
+    } else {
+        buttonContainer.style.display = 'none';
+    }
+}
 
 // Navigate to Step 2
 function goToStep2() {
@@ -808,7 +865,6 @@ function goToStep2() {
     var manualAddressName = document.getElementById('otManualAddressName').value.trim();
     var manualStreet = document.getElementById('otManualStreet').value.trim();
     var manualCity = document.getElementById('otManualCity').value.trim();
-    var saveAddressToOdoo = document.getElementById('otSaveAddressToOdoo').checked;
     
     var deliveryStreet = '';
     var deliveryCity = '';
@@ -826,13 +882,6 @@ function goToStep2() {
         // Store for later use
         document.getElementById('otSelectedStreet').value = manualStreet;
         document.getElementById('otSelectedCity').value = manualCity;
-        
-        // Save to Odoo if checkbox is checked
-        if (saveAddressToOdoo) {
-            var clientId = document.getElementById('otClientId').value;
-            var agentName = document.getElementById('otAgentName').textContent;
-            saveDeliveryAddressToOdooAsync(clientId, manualAddressName, manualStreet, manualCity, agentName);
-        }
     } else {
         alert('Por favor seleccione una dirección de entrega o ingrese los campos manualmente (nombre, dirección y ciudad).');
         return;
@@ -883,7 +932,6 @@ function submitOT() {
     var contactSelect = document.getElementById('otContactSelect');
     var manualName = document.getElementById('otManualContactName').value.trim();
     var manualPhone = document.getElementById('otManualContactPhone').value.trim();
-    var saveToOdoo = document.getElementById('otSaveContactToOdoo').checked;
     
     var contactName = '';
     var contactPhone = '';
@@ -916,11 +964,6 @@ function submitOT() {
         deliveryAddress += (deliveryStreet ? ', ' : '') + deliveryCity;
     }
     
-    // If checkbox is checked and using manual input, save to Odoo asynchronously
-    if (saveToOdoo && manualName && manualPhone) {
-        saveContactToOdooAsync(clientId, manualName, manualPhone, agentName);
-    }
-    
     // Build URL with all parameters including contact info
     var url = otDestinationUrl;
     url += '?client_id=' + encodeURIComponent(clientId);
@@ -936,10 +979,27 @@ function submitOT() {
     window.location.href = url;
 }
 
-// Save delivery address to Odoo asynchronously
-function saveDeliveryAddressToOdooAsync(parentId, addressName, street, city, agentName) {
+// Save delivery address to Odoo now (synchronous with feedback)
+function saveDeliveryAddressNow() {
+    var clientId = document.getElementById('otClientId').value;
+    var addressName = document.getElementById('otManualAddressName').value.trim();
+    var street = document.getElementById('otManualStreet').value.trim();
+    var city = document.getElementById('otManualCity').value.trim();
+    var agentName = document.getElementById('otAgentName').textContent;
+    
+    // Validate inputs
+    if (!addressName || !street || !city) {
+        showNotification('Por favor complete todos los campos de dirección', 'warning');
+        return;
+    }
+    
+    // Disable button while saving
+    var saveBtn = event.target;
+    saveBtn.disabled = true;
+    saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
+    
     var formData = new FormData();
-    formData.append('parent_id', parentId);
+    formData.append('parent_id', clientId);
     formData.append('name', addressName);
     formData.append('street', street);
     formData.append('city', city);
@@ -953,21 +1013,71 @@ function saveDeliveryAddressToOdooAsync(parentId, addressName, street, city, age
     }).then(response => response.json())
       .then(data => {
           if (data.success) {
-              console.log('Delivery address saved to Odoo successfully');
+              showNotification('Dirección guardada exitosamente', 'success');
+              
+              // Add new address to dropdown
+              var select = document.getElementById('otDeliveryAddress');
+              var option = document.createElement('option');
+              option.value = data.address_id || 'new';
+              option.textContent = addressName + ' - ' + street;
+              option.dataset.street = street;
+              option.dataset.city = city;
+              option.selected = true;
+              select.appendChild(option);
+              
+              // Set hidden fields
+              document.getElementById('otSelectedStreet').value = street;
+              document.getElementById('otSelectedCity').value = city;
+              
+              // Show preview
+              document.getElementById('otPreviewStreet').textContent = street;
+              document.getElementById('otPreviewCity').textContent = city;
+              document.getElementById('otAddressPreview').style.display = 'block';
+              
+              // Clear manual inputs and hide button
+              document.getElementById('otManualAddressName').value = '';
+              document.getElementById('otManualStreet').value = '';
+              document.getElementById('otManualCity').value = '';
+              document.getElementById('otSaveAddressToOdoo').checked = false;
+              document.getElementById('otSaveAddressButtonContainer').style.display = 'none';
           } else {
-              console.error('Failed to save delivery address to Odoo:', data.message);
+              showNotification('Error al guardar: ' + (data.message || 'Error desconocido') + '. Por favor contacte a soporte.', 'danger');
           }
+          
+          // Re-enable button
+          saveBtn.disabled = false;
+          saveBtn.innerHTML = '<i class="fas fa-save"></i> Guardar Dirección';
       })
       .catch(error => {
-          console.error('Error saving delivery address to Odoo:', error);
+          showNotification('Error de conexión. Por favor contacte a soporte.', 'danger');
+          console.error('Error saving delivery address:', error);
+          
+          // Re-enable button
+          saveBtn.disabled = false;
+          saveBtn.innerHTML = '<i class="fas fa-save"></i> Guardar Dirección';
       });
 }
 
-// Save contact to Odoo asynchronously
-function saveContactToOdooAsync(parentId, contactName, contactPhone, agentName) {
-    // Send async request to save contact
+// Save contact to Odoo now (synchronous with feedback)
+function saveContactNow() {
+    var clientId = document.getElementById('otClientId').value;
+    var contactName = document.getElementById('otManualContactName').value.trim();
+    var contactPhone = document.getElementById('otManualContactPhone').value.trim();
+    var agentName = document.getElementById('otAgentName').textContent;
+    
+    // Validate inputs
+    if (!contactName || !contactPhone) {
+        showNotification('Por favor complete nombre y teléfono del contacto', 'warning');
+        return;
+    }
+    
+    // Disable button while saving
+    var saveBtn = event.target;
+    saveBtn.disabled = true;
+    saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
+    
     var formData = new FormData();
-    formData.append('parent_id', parentId);
+    formData.append('parent_id', clientId);
     formData.append('name', contactName);
     formData.append('phone', contactPhone);
     formData.append('type', 'contact');
@@ -980,14 +1090,71 @@ function saveContactToOdooAsync(parentId, contactName, contactPhone, agentName) 
     }).then(response => response.json())
       .then(data => {
           if (data.success) {
-              console.log('Contact saved to Odoo successfully');
+              showNotification('Contacto guardado exitosamente', 'success');
+              
+              // Add new contact to dropdown
+              var select = document.getElementById('otContactSelect');
+              var option = document.createElement('option');
+              option.value = data.contact_id || 'new';
+              option.textContent = contactName;
+              option.dataset.name = contactName;
+              option.dataset.phone = contactPhone;
+              option.selected = true;
+              select.appendChild(option);
+              
+              // Set hidden fields
+              document.getElementById('otSelectedContactName').value = contactName;
+              document.getElementById('otSelectedContactPhone').value = contactPhone;
+              
+              // Show preview
+              document.getElementById('otPreviewContactName').textContent = contactName;
+              document.getElementById('otPreviewContactPhone').textContent = contactPhone;
+              document.getElementById('otContactPreview').style.display = 'block';
+              
+              // Clear manual inputs and hide button
+              document.getElementById('otManualContactName').value = '';
+              document.getElementById('otManualContactPhone').value = '';
+              document.getElementById('otSaveContactToOdoo').checked = false;
+              document.getElementById('otSaveContactButtonContainer').style.display = 'none';
           } else {
-              console.error('Failed to save contact to Odoo:', data.message);
+              showNotification('Error al guardar: ' + (data.message || 'Error desconocido') + '. Por favor contacte a soporte.', 'danger');
           }
+          
+          // Re-enable button
+          saveBtn.disabled = false;
+          saveBtn.innerHTML = '<i class="fas fa-save"></i> Guardar Contacto';
       })
       .catch(error => {
-          console.error('Error saving contact to Odoo:', error);
+          showNotification('Error de conexión. Por favor contacte a soporte.', 'danger');
+          console.error('Error saving contact:', error);
+          
+          // Re-enable button
+          saveBtn.disabled = false;
+          saveBtn.innerHTML = '<i class="fas fa-save"></i> Guardar Contacto';
       });
+}
+
+// Show temporary notification
+function showNotification(message, type) {
+    // Create notification element
+    var notification = document.createElement('div');
+    notification.className = 'alert alert-' + type + ' alert-dismissible fade show position-fixed';
+    notification.style.top = '20px';
+    notification.style.right = '20px';
+    notification.style.zIndex = '9999';
+    notification.style.minWidth = '300px';
+    notification.innerHTML = message;
+    
+    // Add to body
+    document.body.appendChild(notification);
+    
+    // Auto-remove after 4 seconds
+    setTimeout(function() {
+        notification.classList.remove('show');
+        setTimeout(function() {
+            notification.remove();
+        }, 150);
+    }, 4000);
 }
 
 function deleteContact(contactId, contactName) {
