@@ -2,7 +2,12 @@
 
 ## Overview
 
-The **Odoo Contacts Component** is a Joomla 5.0 component that provides a customer management system integrated with Odoo ERP. It allows sales agents to view, create, edit, and manage their client contacts through a web-based interface while keeping data synchronized with the main Odoo ERP system.
+The **Odoo Contacts Component** (v1.0.1) is a Joomla 5.0+ component that provides a comprehensive customer management system integrated with Odoo ERP. It allows sales agents to view, create, edit, and manage their client contacts through a web-based interface while keeping data synchronized with the main Odoo ERP system.
+
+**Version:** 1.0.1-STABLE  
+**Joomla Compatibility:** 5.0+  
+**PHP Version:** 8.0+  
+**Last Updated:** October 2025
 
 ## Project Structure
 
@@ -56,22 +61,49 @@ com_odoocontacts/
 ## Key Features
 
 ### 1. Contact Management
-- **List View**: Display contacts with pagination (15/30/100 items per page)
+- **List View**: Display parent contacts only with pagination (15/30/100 items per page)
 - **Search**: Server-side filtering across name, email, phone, mobile
 - **CRUD Operations**: Create, read, update, delete contacts
-- **Agent Filtering**: Contacts filtered by sales agent
+- **Agent Filtering**: Contacts filtered by sales agent field
+- **Hierarchical Structure**: Parent/child contact relationships
+- **Child Contact Management**: Delivery addresses and contact persons as child contacts
 
-### 2. User Interface
-- **Responsive Design**: Bootstrap-based responsive layout
+### 2. Work Order (OT) System
+- **Two-Step Wizard**: Modal-based work order creation
+- **Step 1 - Delivery Information**:
+  - Select existing delivery address or enter new one
+  - Delivery instructions text area
+  - Option to save new delivery address to Odoo
+- **Step 2 - Contact Person**:
+  - Select existing contact or enter manually
+  - Includes parent contact in selection
+  - Option to save new contact to Odoo
+- **Async Saving**: Non-blocking contact/address creation
+- **Configurable URL**: Admin setting for work order destination
+- **Data Collection**: Captures client info, delivery details, contact person, and agent name
+
+### 3. User Interface
+- **Responsive Design**: Bootstrap 5-based responsive layout
 - **Professional Styling**: Sober colors, compact table design
 - **Search Interface**: Real-time search with clear functionality
 - **Pagination**: Navigation controls with item counters
+- **Action Buttons**: Quick access to edit, delete, quotation, and work orders
+- **Modal Windows**: Elegant popup forms for work order creation
+- **Progress Indicators**: Visual feedback for multi-step processes
 
-### 3. Odoo Integration
+### 4. Odoo Integration
 - **XML-RPC API**: Direct integration with Odoo ERP
 - **Authentication**: API key-based authentication
 - **Data Synchronization**: Real-time data from Odoo
+- **Child Contact API**: Fetch and create child contacts (delivery, contact types)
+- **Parent Contact Filter**: Automatically filters out child contacts from main list
 - **Error Handling**: Graceful fallbacks and error messages
+
+### 5. Debug & Configuration
+- **Debug Mode Toggle**: Enable/disable console logging and debug messages
+- **Admin Dashboard**: Version display and quick access
+- **Configuration UI**: Full admin settings interface
+- **Component Options**: Odoo connection, pagination, debug mode, OT URL
 
 ## Configuration
 
