@@ -340,18 +340,41 @@ function safeGet($array, $key, $default = '') {
                         </div>
                     </div>
                     
-                    <!-- Delivery Address Selection -->
-                    <div class="mb-3">
-                        <label for="otDeliveryAddress" class="form-label">
-                            <i class="fas fa-map-marker-alt"></i> Dirección de Entrega
+                    <!-- Delivery Type Selection -->
+                    <div class="mb-4">
+                        <label class="form-label">
+                            <i class="fas fa-shipping-fast"></i> Tipo de Entrega *
                         </label>
-                        <select id="otDeliveryAddress" class="form-select">
-                            <option value="">Seleccione una dirección...</option>
-                        </select>
+                        <div class="btn-group w-100" role="group">
+                            <input type="radio" class="btn-check" name="otDeliveryType" id="otDeliveryTypeDomicilio" value="domicilio" checked>
+                            <label class="btn btn-outline-primary" for="otDeliveryTypeDomicilio">
+                                <i class="fas fa-truck"></i> Entrega a Domicilio
+                            </label>
+                            
+                            <input type="radio" class="btn-check" name="otDeliveryType" id="otDeliveryTypeRecoger" value="recoger">
+                            <label class="btn btn-outline-success" for="otDeliveryTypeRecoger">
+                                <i class="fas fa-store"></i> Recoger en Oficina
+                            </label>
+                        </div>
                         <div class="form-text">
-                            Seleccione una dirección existente o ingrese una nueva abajo.
+                            Seleccione si desea entrega a domicilio o recoger en nuestras instalaciones.
                         </div>
                     </div>
+                    
+                    <!-- Delivery Address Container (shown only for domicilio) -->
+                    <div id="otDeliveryAddressContainer">
+                        <!-- Delivery Address Selection -->
+                        <div class="mb-3">
+                            <label for="otDeliveryAddress" class="form-label">
+                                <i class="fas fa-map-marker-alt"></i> Dirección de Entrega
+                            </label>
+                            <select id="otDeliveryAddress" class="form-select">
+                                <option value="">Seleccione una dirección...</option>
+                            </select>
+                            <div class="form-text">
+                                Seleccione una dirección existente o ingrese una nueva abajo.
+                            </div>
+                        </div>
                     
                     <!-- Address Preview -->
                     <div id="otAddressPreview" class="card mb-3" style="display: none;">
@@ -417,6 +440,7 @@ function safeGet($array, $key, $default = '') {
                             </div>
                         </div>
                     </div>
+                    </div><!-- End Delivery Address Container -->
                     
                     <!-- Delivery Instructions -->
                     <div class="mb-3">
@@ -581,6 +605,10 @@ function openOTModal(clientId, clientName, clientVat) {
     document.getElementById('otClientId').value = clientId;
     document.getElementById('otClientName').textContent = clientName;
     document.getElementById('otClientVat').textContent = clientVat || 'N/A';
+    
+    // Reset delivery type to domicilio
+    document.getElementById('otDeliveryTypeDomicilio').checked = true;
+    document.getElementById('otDeliveryAddressContainer').style.display = 'block';
     
     // Clear previous selections - delivery address
     document.getElementById('otDeliveryAddress').innerHTML = '<option value="">Cargando direcciones...</option>';
@@ -778,6 +806,25 @@ function populateContactPersons(parentContact) {
 
 // Setup manual input listeners
 document.addEventListener('DOMContentLoaded', function() {
+    // Delivery type toggle handler
+    var deliveryTypeDomicilio = document.getElementById('otDeliveryTypeDomicilio');
+    var deliveryTypeRecoger = document.getElementById('otDeliveryTypeRecoger');
+    var deliveryAddressContainer = document.getElementById('otDeliveryAddressContainer');
+    
+    if (deliveryTypeDomicilio && deliveryTypeRecoger && deliveryAddressContainer) {
+        deliveryTypeDomicilio.addEventListener('change', function() {
+            if (this.checked) {
+                deliveryAddressContainer.style.display = 'block';
+            }
+        });
+        
+        deliveryTypeRecoger.addEventListener('change', function() {
+            if (this.checked) {
+                deliveryAddressContainer.style.display = 'none';
+            }
+        });
+    }
+    
     // Clear delivery dropdown when manual address inputs are used
     var manualAddressFields = ['otManualAddressName', 'otManualStreet', 'otManualCity'];
     manualAddressFields.forEach(function(fieldId) {
@@ -876,30 +923,43 @@ function toggleSaveContactButton() {
 
 // Navigate to Step 2
 function goToStep2() {
-    var deliverySelect = document.getElementById('otDeliveryAddress');
-    var manualAddressName = document.getElementById('otManualAddressName').value.trim();
-    var manualStreet = document.getElementById('otManualStreet').value.trim();
-    var manualCity = document.getElementById('otManualCity').value.trim();
-    
+    // Check delivery type
+    var deliveryType = document.querySelector('input[name="otDeliveryType"]:checked').value;
     var deliveryStreet = '';
     var deliveryCity = '';
     
-    // Validate: either dropdown OR manual inputs
-    if (deliverySelect.value) {
-        // Using dropdown
-        deliveryStreet = document.getElementById('otSelectedStreet').value;
-        deliveryCity = document.getElementById('otSelectedCity').value;
-    } else if (manualAddressName && manualStreet && manualCity) {
-        // Using manual input
-        deliveryStreet = manualStreet;
-        deliveryCity = manualCity;
+    if (deliveryType === 'recoger') {
+        // Pickup option - no address validation needed
+        deliveryStreet = 'Recoger en Oficina';
+        deliveryCity = '';
         
         // Store for later use
-        document.getElementById('otSelectedStreet').value = manualStreet;
-        document.getElementById('otSelectedCity').value = manualCity;
+        document.getElementById('otSelectedStreet').value = deliveryStreet;
+        document.getElementById('otSelectedCity').value = '';
     } else {
-        alert('Por favor seleccione una dirección de entrega o ingrese los campos manualmente (nombre, dirección y ciudad).');
-        return;
+        // Delivery to address - validate address selection
+        var deliverySelect = document.getElementById('otDeliveryAddress');
+        var manualAddressName = document.getElementById('otManualAddressName').value.trim();
+        var manualStreet = document.getElementById('otManualStreet').value.trim();
+        var manualCity = document.getElementById('otManualCity').value.trim();
+        
+        // Validate: either dropdown OR manual inputs
+        if (deliverySelect.value) {
+            // Using dropdown
+            deliveryStreet = document.getElementById('otSelectedStreet').value;
+            deliveryCity = document.getElementById('otSelectedCity').value;
+        } else if (manualAddressName && manualStreet && manualCity) {
+            // Using manual input
+            deliveryStreet = manualStreet;
+            deliveryCity = manualCity;
+            
+            // Store for later use
+            document.getElementById('otSelectedStreet').value = manualStreet;
+            document.getElementById('otSelectedCity').value = manualCity;
+        } else {
+            alert('Por favor seleccione una dirección de entrega o ingrese los campos manualmente (nombre, dirección y ciudad).');
+            return;
+        }
     }
     
     // Update summary
@@ -972,6 +1032,7 @@ function submitOT() {
     var deliveryCity = document.getElementById('otSelectedCity').value;
     var instructions = document.getElementById('otDeliveryInstructions').value;
     var agentName = document.getElementById('otAgentName').textContent;
+    var deliveryType = document.querySelector('input[name="otDeliveryType"]:checked').value;
     
     // Merge street and city into single delivery address
     var deliveryAddress = deliveryStreet;
@@ -979,12 +1040,13 @@ function submitOT() {
         deliveryAddress += (deliveryStreet ? ', ' : '') + deliveryCity;
     }
     
-    // Build URL with all parameters including contact info
+    // Build URL with all parameters including contact info and delivery type
     var url = otDestinationUrl;
     url += '?client_id=' + encodeURIComponent(clientId);
     url += '&contact_name=' + encodeURIComponent(clientName);
     url += '&contact_vat=' + encodeURIComponent(clientVat);
     url += '&x_studio_agente_de_ventas=' + encodeURIComponent(agentName);
+    url += '&tipo_entrega=' + encodeURIComponent(deliveryType);
     url += '&delivery_address=' + encodeURIComponent(deliveryAddress);
     url += '&instrucciones_entrega=' + encodeURIComponent(instructions);
     url += '&contact_person_name=' + encodeURIComponent(contactName);
