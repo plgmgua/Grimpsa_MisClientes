@@ -150,6 +150,7 @@ class OdooHelper
                            <value><string>mobile</string></value>
                            <value><string>display_name</string></value>
                            <value><string>child_ids</string></value>
+                           <value><string>parent_id</string></value>
                         </data>
                      </array>
                   </value>
@@ -284,6 +285,8 @@ class OdooHelper
             }
 
             $contact = [];
+            $hasParentId = false;
+            
             foreach ($value['struct']['member'] as $member) {
                 $fieldName = $member['name'];
                 $fieldValue = '';
@@ -292,19 +295,30 @@ class OdooHelper
                     $fieldValue = $member['value']['string'];
                 } elseif (isset($member['value']['int'])) {
                     $fieldValue = (string)$member['value']['int'];
+                } elseif (isset($member['value']['array']['data']['value'])) {
+                    // Handle parent_id which comes as array [id, name]
+                    if ($fieldName === 'parent_id') {
+                        $hasParentId = true;
+                        // Store the parent ID if needed
+                        $fieldValue = isset($member['value']['array']['data']['value'][0]['int']) 
+                            ? (string)$member['value']['array']['data']['value'][0]['int'] 
+                            : '';
+                    }
+                } elseif (isset($member['value']['boolean'])) {
+                    $fieldValue = $member['value']['boolean'];
                 }
                 
                 $contact[$fieldName] = $fieldValue;
             }
             
-            // Filter by agent name AND only show main contacts (type = 'contact' or empty)
-            $contactType = isset($contact['type']) ? $contact['type'] : 'contact';
-            $isMainContact = ($contactType === 'contact' || $contactType === '' || $contactType === false);
-            
+            // Filter out child contacts (those with parent_id set)
+            // Only show parent contacts (no parent_id) that belong to this agent
             if (isset($contact['x_studio_agente_de_ventas']) && 
                 $contact['x_studio_agente_de_ventas'] === $agentName && 
-                $isMainContact) {
+                !$hasParentId) {
                 // Map fields to match expected structure
+                $contactType = isset($contact['type']) ? $contact['type'] : 'contact';
+                
                 $normalizedContact = [
                     'id' => isset($contact['id']) ? $contact['id'] : '0',
                     'name' => isset($contact['name']) ? $contact['name'] : '',
