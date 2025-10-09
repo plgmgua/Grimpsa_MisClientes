@@ -125,12 +125,12 @@ class HtmlView extends BaseHtmlView
         // Debug: Add version info to help troubleshoot
         $config = ComponentHelper::getParams('com_odoocontacts');
         if ($config->get('enable_debug', 0)) {
-            Factory::getApplication()->enqueueMessage('Odoo Contacts Component v1.0.0-STABLE loaded. CSS: contacts.css', 'notice');
+            Factory::getApplication()->enqueueMessage('Odoo Contacts Component v1.0.1-STABLE loaded. CSS: contacts.css', 'info');
             
             // Debug search functionality
             $search = $this->state->get('filter.search', '');
             if (!empty($search)) {
-                Factory::getApplication()->enqueueMessage('Search term: "' . $search . '"', 'notice');
+                Factory::getApplication()->enqueueMessage('Search term: "' . $search . '"', 'info');
             }
         }
     }

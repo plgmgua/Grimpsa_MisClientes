@@ -573,6 +573,7 @@ function safeGet($array, $key, $default = '') {
 // OT Modal Variables
 var otChildContacts = [];
 var otDestinationUrl = '<?php echo $this->params->get('ot_destination_url', 'https://grimpsa_webserver.grantsolutions.cc/index.php/orden-de-trabajo'); ?>';
+var otDebugMode = <?php echo $this->params->get('enable_debug', 0) ? 'true' : 'false'; ?>;
 
 // Open OT Modal
 function openOTModal(clientId, clientName, clientVat) {
@@ -637,7 +638,7 @@ function loadChildContacts(clientId, parentName) {
           populateContactPersons(parentContact);
       })
       .catch(error => {
-          console.error('Error loading contacts:', error);
+          if (otDebugMode) console.error('Error loading contacts:', error);
           otChildContacts = [];
           populateDeliveryAddresses(null);
           populateContactPersons(null);
@@ -838,14 +839,16 @@ function toggleSaveAddressButton() {
     var city = document.getElementById('otManualCity').value.trim();
     var buttonContainer = document.getElementById('otSaveAddressButtonContainer');
     
-    console.log('Toggle Address Button - Checkbox:', checkbox.checked, 'Name:', name, 'Street:', street, 'City:', city);
+    if (otDebugMode) {
+        console.log('Toggle Address Button - Checkbox:', checkbox.checked, 'Name:', name, 'Street:', street, 'City:', city);
+    }
     
     // Show button only if checkbox is checked AND all manual fields have values
     if (checkbox.checked && name && street && city) {
-        console.log('Showing address save button');
+        if (otDebugMode) console.log('Showing address save button');
         buttonContainer.style.display = 'block';
     } else {
-        console.log('Hiding address save button');
+        if (otDebugMode) console.log('Hiding address save button');
         buttonContainer.style.display = 'none';
     }
 }
@@ -857,14 +860,16 @@ function toggleSaveContactButton() {
     var phone = document.getElementById('otManualContactPhone').value.trim();
     var buttonContainer = document.getElementById('otSaveContactButtonContainer');
     
-    console.log('Toggle Contact Button - Checkbox:', checkbox.checked, 'Name:', name, 'Phone:', phone);
+    if (otDebugMode) {
+        console.log('Toggle Contact Button - Checkbox:', checkbox.checked, 'Name:', name, 'Phone:', phone);
+    }
     
     // Show button only if checkbox is checked AND all manual fields have values
     if (checkbox.checked && name && phone) {
-        console.log('Showing contact save button');
+        if (otDebugMode) console.log('Showing contact save button');
         buttonContainer.style.display = 'block';
     } else {
-        console.log('Hiding contact save button');
+        if (otDebugMode) console.log('Hiding contact save button');
         buttonContainer.style.display = 'none';
     }
 }
@@ -1060,7 +1065,7 @@ function saveDeliveryAddressNow() {
       })
       .catch(error => {
           showNotification('Error de conexión. Por favor contacte a soporte.', 'danger');
-          console.error('Error saving delivery address:', error);
+          if (otDebugMode) console.error('Error saving delivery address:', error);
           
           // Re-enable button
           saveBtn.disabled = false;
@@ -1136,7 +1141,7 @@ function saveContactNow() {
       })
       .catch(error => {
           showNotification('Error de conexión. Por favor contacte a soporte.', 'danger');
-          console.error('Error saving contact:', error);
+          if (otDebugMode) console.error('Error saving contact:', error);
           
           // Re-enable button
           saveBtn.disabled = false;
