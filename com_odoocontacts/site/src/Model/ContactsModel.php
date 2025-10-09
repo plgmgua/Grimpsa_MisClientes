@@ -87,10 +87,16 @@ class ContactsModel extends ListModel
                     // Apply search filter on server side
                     if (!empty($search)) {
                         $searchLower = strtolower($search);
-                        $nameMatch = strpos(strtolower($normalizedContact['name']), $searchLower) !== false;
-                        $emailMatch = strpos(strtolower($normalizedContact['email']), $searchLower) !== false;
-                        $phoneMatch = strpos(strtolower($normalizedContact['phone']), $searchLower) !== false;
-                        $mobileMatch = strpos(strtolower($normalizedContact['mobile']), $searchLower) !== false;
+                        // Ensure all fields are strings before strtolower()
+                        $name = is_string($normalizedContact['name']) ? $normalizedContact['name'] : '';
+                        $email = is_string($normalizedContact['email']) ? $normalizedContact['email'] : '';
+                        $phone = is_string($normalizedContact['phone']) ? $normalizedContact['phone'] : '';
+                        $mobile = is_string($normalizedContact['mobile']) ? $normalizedContact['mobile'] : '';
+                        
+                        $nameMatch = strpos(strtolower($name), $searchLower) !== false;
+                        $emailMatch = strpos(strtolower($email), $searchLower) !== false;
+                        $phoneMatch = strpos(strtolower($phone), $searchLower) !== false;
+                        $mobileMatch = strpos(strtolower($mobile), $searchLower) !== false;
                         
                         if ($nameMatch || $emailMatch || $phoneMatch || $mobileMatch) {
                             $validContacts[] = $normalizedContact;
@@ -139,10 +145,11 @@ class ContactsModel extends ListModel
                 foreach ($allContacts as $contact) {
                     if (is_array($contact)) {
                         $searchLower = strtolower($search);
-                        $name = isset($contact['name']) ? strtolower($contact['name']) : '';
-                        $email = isset($contact['email']) ? strtolower($contact['email']) : '';
-                        $phone = isset($contact['phone']) ? strtolower($contact['phone']) : '';
-                        $mobile = isset($contact['mobile']) ? strtolower($contact['mobile']) : '';
+                        // Ensure all fields are strings before strtolower()
+                        $name = (isset($contact['name']) && is_string($contact['name'])) ? strtolower($contact['name']) : '';
+                        $email = (isset($contact['email']) && is_string($contact['email'])) ? strtolower($contact['email']) : '';
+                        $phone = (isset($contact['phone']) && is_string($contact['phone'])) ? strtolower($contact['phone']) : '';
+                        $mobile = (isset($contact['mobile']) && is_string($contact['mobile'])) ? strtolower($contact['mobile']) : '';
                         
                         if (strpos($name, $searchLower) !== false || 
                             strpos($email, $searchLower) !== false || 

@@ -296,16 +296,38 @@ class OdooHelper
                 } elseif (isset($member['value']['int'])) {
                     $fieldValue = (string)$member['value']['int'];
                 } elseif (isset($member['value']['array']['data']['value'])) {
-                    // Handle parent_id which comes as array [id, name]
+                    // Handle array fields (parent_id, child_ids, etc.)
                     if ($fieldName === 'parent_id') {
                         $hasParentId = true;
                         // Store the parent ID if needed
                         $fieldValue = isset($member['value']['array']['data']['value'][0]['int']) 
                             ? (string)$member['value']['array']['data']['value'][0]['int'] 
                             : '';
+                    } elseif ($fieldName === 'child_ids') {
+                        // Convert child_ids array to comma-separated string
+                        $childIds = [];
+                        if (isset($member['value']['array']['data']['value'])) {
+                            $childValues = $member['value']['array']['data']['value'];
+                            // Handle single value or multiple values
+                            if (isset($childValues['int'])) {
+                                $childIds[] = (string)$childValues['int'];
+                            } else {
+                                foreach ($childValues as $childValue) {
+                                    if (isset($childValue['int'])) {
+                                        $childIds[] = (string)$childValue['int'];
+                                    }
+                                }
+                            }
+                        }
+                        $fieldValue = implode(',', $childIds);
+                    } else {
+                        // For any other array field, convert to string representation
+                        $fieldValue = '';
                     }
                 } elseif (isset($member['value']['boolean'])) {
-                    $fieldValue = $member['value']['boolean'];
+                    $fieldValue = $member['value']['boolean'] ? '1' : '0';
+                } elseif (isset($member['value']['double'])) {
+                    $fieldValue = (string)$member['value']['double'];
                 }
                 
                 $contact[$fieldName] = $fieldValue;
