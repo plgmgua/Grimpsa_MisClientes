@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<config>
+    <fieldset
+        name="odoo_connection"
+        label="COM_ODOOCONTACTS_CONFIG_ODOO_CONNECTION"
+        description="COM_ODOOCONTACTS_CONFIG_ODOO_CONNECTION_DESC"
+    >
+        <field
+            name="odoo_url"
+            type="text"
+            label="COM_ODOOCONTACTS_CONFIG_ODOO_URL_LABEL"
+            description="COM_ODOOCONTACTS_CONFIG_ODOO_URL_DESC"
+            default="https://grimpsa.odoo.com"
+            required="true"
+        />
+        <field
+            name="odoo_db"
+            type="text"
+            label="COM_ODOOCONTACTS_CONFIG_ODOO_DB_LABEL"
+            description="COM_ODOOCONTACTS_CONFIG_ODOO_DB_DESC"
+            default="grimpsa"
+            required="true"
+        />
+        <field
+            name="odoo_username"
+            type="text"
+            label="COM_ODOOCONTACTS_CONFIG_ODOO_USERNAME_LABEL"
+            description="COM_ODOOCONTACTS_CONFIG_ODOO_USERNAME_DESC"
+            default="admin@grimpsa.com"
+            required="true"
+        />
+        <field
+            name="odoo_api_key"
+            type="password"
+            label="COM_ODOOCONTACTS_CONFIG_ODOO_API_KEY_LABEL"
+            description="COM_ODOOCONTACTS_CONFIG_ODOO_API_KEY_DESC"
+            default="2386bb5ae66c7fd9022feaf82148680c4cf4ce3b"
+            required="true"
+        />
+        <field
+            name="contacts_per_page"
+            type="number"
+            label="COM_ODOOCONTACTS_CONFIG_CONTACTS_PER_PAGE_LABEL"
+            description="COM_ODOOCONTACTS_CONFIG_CONTACTS_PER_PAGE_DESC"
+            default="20"
+            min="5"
+            max="100"
+        />
+        <field
+            name="enable_debug"
+            type="radio"
+            label="COM_ODOOCONTACTS_CONFIG_ENABLE_DEBUG_LABEL"
+            description="COM_ODOOCONTACTS_CONFIG_ENABLE_DEBUG_DESC"
+            default="0"
+            class="btn-group btn-group-yesno"
+        >
+            <option value="1">JYES</option>
+            <option value="0">JNO</option>
+        </field>
+        <field
+            name="ot_destination_url"
+            type="text"
+            label="COM_ODOOCONTACTS_CONFIG_OT_DESTINATION_URL_LABEL"
+            description="COM_ODOOCONTACTS_CONFIG_OT_DESTINATION_URL_DESC"
+            default="https://grimpsa_webserver.grantsolutions.cc/index.php/orden-de-trabajo"
+            required="false"
+        />
+    </fieldset>
+</config>

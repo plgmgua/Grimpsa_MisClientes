@@ -19,6 +19,7 @@ use Joomla\CMS\Router\Route;
             <div class="card-header">
                 <h3 class="card-title">
                     <?php echo Text::_('COM_ODOOCONTACTS_DASHBOARD_TITLE'); ?>
+                    <span class="badge bg-info ms-2">v1.0.1</span>
                 </h3>
             </div>
             <div class="card-body">
