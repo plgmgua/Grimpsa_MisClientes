@@ -217,23 +217,17 @@ function safeGet($array, $key, $default = '') {
                                     </a>
                                     
                                     <button type="button" 
+                                            class="btn btn-outline-warning" 
+                                            onclick="openCotizacionWindow(<?php echo (int)safeGet($item, 'id', 0); ?>, '<?php echo addslashes(safeGet($item, 'name', 'Sin nombre')); ?>', '<?php echo addslashes(safeGet($item, 'vat', '')); ?>')" 
+                                            title="Cotización">
+                                        <strong>Q.</strong>
+                                    </button>
+                                    
+                                    <button type="button" 
                                             class="btn btn-outline-success" 
                                             onclick="openOTModal(<?php echo (int)safeGet($item, 'id', 0); ?>, '<?php echo addslashes(safeGet($item, 'name', 'Sin nombre')); ?>', '<?php echo addslashes(safeGet($item, 'vat', '')); ?>')" 
                                             title="Orden de Trabajo">
                                         <i class="fas fa-truck"></i> OT
-                                    </button>
-                                    
-                                    <a href="<?php echo Route::_('index.php?option=com_odoocontacts&view=newaction&id=' . (int)safeGet($item, 'id', 0)); ?>" 
-                                       class="btn btn-outline-info" 
-                                       title="Nueva Acción">
-                                        <i class="fas fa-cog"></i>
-                                    </a>
-                                    
-                                    <button type="button" 
-                                            class="btn btn-outline-danger" 
-                                            onclick="deleteContact(<?php echo (int)safeGet($item, 'id', 0); ?>, '<?php echo addslashes(safeGet($item, 'name', 'Sin nombre')); ?>')" 
-                                            title="Eliminar">
-                                        <i class="fas fa-trash"></i>
                                     </button>
                                 </div>
                             </td>
@@ -597,7 +591,23 @@ function safeGet($array, $key, $default = '') {
 // OT Modal Variables
 var otChildContacts = [];
 var otDestinationUrl = '<?php echo $this->params->get('ot_destination_url', 'https://grimpsa_webserver.grantsolutions.cc/index.php/orden-de-trabajo'); ?>';
+var cotizacionDestinationUrl = '<?php echo $this->params->get('cotizacion_destination_url', 'https://grimpsa_webserver.grantsolutions.cc/index.php/cotizacion'); ?>';
 var otDebugMode = <?php echo $this->params->get('enable_debug', 0) ? 'true' : 'false'; ?>;
+
+// Open Cotización in new tab
+function openCotizacionWindow(clientId, clientName, clientVat) {
+    var agentName = '<?php echo addslashes($user->name); ?>';
+    
+    // Build URL with parameters
+    var url = cotizacionDestinationUrl;
+    url += '?client_id=' + encodeURIComponent(clientId);
+    url += '&contact_name=' + encodeURIComponent(clientName);
+    url += '&contact_vat=' + encodeURIComponent(clientVat);
+    url += '&x_studio_agente_de_ventas=' + encodeURIComponent(agentName);
+    
+    // Open in new tab
+    window.open(url, '_blank');
+}
 
 // Open OT Modal
 function openOTModal(clientId, clientName, clientVat) {

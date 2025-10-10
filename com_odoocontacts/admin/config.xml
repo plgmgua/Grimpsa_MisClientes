@@ -58,6 +58,14 @@
             <option value="0">JNO</option>
         </field>
         <field
+            name="cotizacion_destination_url"
+            type="text"
+            label="COM_ODOOCONTACTS_CONFIG_COTIZACION_DESTINATION_URL_LABEL"
+            description="COM_ODOOCONTACTS_CONFIG_COTIZACION_DESTINATION_URL_DESC"
+            default="https://grimpsa_webserver.grantsolutions.cc/index.php/cotizacion"
+            required="false"
+        />
+        <field
             name="ot_destination_url"
             type="text"
             label="COM_ODOOCONTACTS_CONFIG_OT_DESTINATION_URL_LABEL"

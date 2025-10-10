@@ -105,6 +105,9 @@ if (!$isNew && !$isChildContact && isset($this->item->id) && (int)$this->item->i
                 <button type="button" id="viewModeBtn" class="btn btn-secondary" onclick="toggleEditMode('toggle')" style="display: none;">
                     <i class="fas fa-eye"></i> Ver
                 </button>
+                <button type="button" class="btn btn-danger ms-2" onclick="deleteContact(<?php echo (int)($this->item->id ?? 0); ?>, '<?php echo addslashes(safeGetProperty($this->item, 'name', 'Cliente')); ?>')">
+                    <i class="fas fa-trash"></i> Eliminar
+                </button>
             </div>
             <?php endif; ?>
         </div>
@@ -689,6 +692,34 @@ function deleteChildContact(contactId, contactName) {
     // Initialize Bootstrap modal
     var deleteModal = new bootstrap.Modal(document.getElementById('deleteChildModal'));
     deleteModal.show();
+}
+
+// Delete main contact function
+function deleteContact(contactId, contactName) {
+    if (confirm('¿Está seguro que desea eliminar el cliente "' + contactName + '"?\n\nEsta acción NO se puede deshacer.')) {
+        // Create and submit delete form
+        const deleteForm = document.createElement('form');
+        deleteForm.method = 'POST';
+        deleteForm.action = '<?php echo Route::_("index.php?option=com_odoocontacts&view=contacts"); ?>';
+        
+        // Add form fields
+        const fields = {
+            'task': 'contact.delete',
+            'id': contactId,
+            '<?php echo Session::getFormToken(); ?>': '1'
+        };
+        
+        for (const [key, value] of Object.entries(fields)) {
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = key;
+            input.value = value;
+            deleteForm.appendChild(input);
+        }
+        
+        document.body.appendChild(deleteForm);
+        deleteForm.submit();
+    }
 }
 
 Joomla.submitbutton = function(task) {
