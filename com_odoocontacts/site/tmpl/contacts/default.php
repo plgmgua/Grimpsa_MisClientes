@@ -1021,9 +1021,33 @@ function oteShowStep(step) {
         document.getElementById('oteStep1').innerHTML = '';
         document.getElementById('oteStep1').appendChild(otStep1Content);
         
+        console.log('OTE: Cloned OT Step 1 content');
+        
+        // FIX ID DUPLICATION: Change IDs to OTE-specific ones to avoid conflicts with original OT modal
+        // This is CRITICAL because labels use "for" attribute which references IDs
+        var oteStep1Container = document.getElementById('oteStep1');
+        
+        // Update radio button IDs and their corresponding labels
+        var domicilioRadio = oteStep1Container.querySelector('#otDeliveryTypeDomicilio');
+        var recogerRadio = oteStep1Container.querySelector('#otDeliveryTypeRecoger');
+        var domicilioLabel = oteStep1Container.querySelector('label[for="otDeliveryTypeDomicilio"]');
+        var recogerLabel = oteStep1Container.querySelector('label[for="otDeliveryTypeRecoger"]');
+        
+        if (domicilioRadio && domicilioLabel) {
+            domicilioRadio.id = 'oteDeliveryTypeDomicilio';
+            domicilioLabel.setAttribute('for', 'oteDeliveryTypeDomicilio');
+            console.log('OTE: Updated Domicilio radio ID to oteDeliveryTypeDomicilio');
+        }
+        
+        if (recogerRadio && recogerLabel) {
+            recogerRadio.id = 'oteDeliveryTypeRecoger';
+            recogerLabel.setAttribute('for', 'oteDeliveryTypeRecoger');
+            console.log('OTE: Updated Recoger radio ID to oteDeliveryTypeRecoger');
+        }
+        
         // Populate client information in the cloned content
-        var clientNameEl = document.getElementById('oteStep1').querySelector('#otClientName');
-        var clientVatEl = document.getElementById('oteStep1').querySelector('#otClientVat');
+        var clientNameEl = oteStep1Container.querySelector('#otClientName');
+        var clientVatEl = oteStep1Container.querySelector('#otClientVat');
         
         if (clientNameEl) {
             clientNameEl.textContent = oteClientData.name;
@@ -1032,14 +1056,13 @@ function oteShowStep(step) {
             clientVatEl.textContent = oteClientData.vat || 'N/A';
         }
         
-        if (otDebugMode) {
-            console.log('OTE Step 1 - Populated client info:', oteClientData.name, oteClientData.vat);
-        }
+        console.log('OTE Step 1 - Populated client info:', oteClientData.name, oteClientData.vat);
         
         // Re-attach event listeners for delivery type toggle (cloning doesn't copy listeners)
         oteAttachStep1Listeners();
         
         document.getElementById('oteStep1').style.display = 'block';
+        console.log('OTE: oteStep1 set to display block');
     } else if (step === 2) {
         // Copy OT Step 2 content
         var otStep2Content = document.getElementById('otStep2').cloneNode(true);
@@ -1084,9 +1107,9 @@ function oteAttachStep1Listeners() {
     console.log('OTE: oteStep1Container found:', oteStep1Container);
     console.log('OTE: oteStep1Container display:', oteStep1Container.style.display);
     
-    // Find delivery type radio buttons within the cloned content
-    var deliveryTypeDomicilio = oteStep1Container.querySelector('#otDeliveryTypeDomicilio');
-    var deliveryTypeRecoger = oteStep1Container.querySelector('#otDeliveryTypeRecoger');
+    // Find delivery type radio buttons within the cloned content (using OTE-specific IDs)
+    var deliveryTypeDomicilio = oteStep1Container.querySelector('#oteDeliveryTypeDomicilio');
+    var deliveryTypeRecoger = oteStep1Container.querySelector('#oteDeliveryTypeRecoger');
     var deliveryAddressContainer = oteStep1Container.querySelector('#otDeliveryAddressContainer');
     
     console.log('OTE Step 1 - Element search results:');
