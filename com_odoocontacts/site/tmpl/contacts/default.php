@@ -912,22 +912,50 @@ function oteUpdateProgress() {
 
 // OTE Validate Step 1 (Delivery)
 function oteValidateStep1() {
-    // Reuse OT validation logic
-    var deliveryType = document.querySelector('input[name="otDeliveryType"]:checked').value;
+    // Check elements within the OTE modal context (oteStep1)
+    var oteStep1Container = document.getElementById('oteStep1');
+    if (!oteStep1Container) {
+        alert('Error: No se puede validar el formulario');
+        return false;
+    }
+    
+    // Find delivery type radio buttons within OTE step 1
+    var deliveryTypeRadio = oteStep1Container.querySelector('input[name="otDeliveryType"]:checked');
+    if (!deliveryTypeRadio) {
+        alert('Por favor seleccione un tipo de entrega');
+        return false;
+    }
+    
+    var deliveryType = deliveryTypeRadio.value;
+    
+    if (otDebugMode) console.log('OTE Step 1 validation - deliveryType:', deliveryType);
     
     if (deliveryType === 'recoger') {
+        if (otDebugMode) console.log('OTE Step 1 validation - Pickup selected, valid');
         return true; // No address validation needed for pickup
     }
     
-    var deliverySelect = document.getElementById('otDeliveryAddress');
-    var manualName = document.getElementById('otManualAddressName');
-    var manualStreet = document.getElementById('otManualAddressStreet');
+    // Find delivery select and manual inputs within OTE step 1
+    var deliverySelect = oteStep1Container.querySelector('#otDeliveryAddress');
+    var manualName = oteStep1Container.querySelector('#otManualAddressName');
+    var manualStreet = oteStep1Container.querySelector('#otManualStreet');
     
+    if (otDebugMode) {
+        console.log('OTE Step 1 validation - deliverySelect:', deliverySelect);
+        console.log('OTE Step 1 validation - deliverySelect.value:', deliverySelect ? deliverySelect.value : 'null');
+        console.log('OTE Step 1 validation - manualName:', manualName);
+        console.log('OTE Step 1 validation - manualStreet:', manualStreet);
+    }
+    
+    // Check if an existing address is selected
     if (deliverySelect && deliverySelect.value) {
+        if (otDebugMode) console.log('OTE Step 1 validation - Existing address selected, valid');
         return true;
     }
     
+    // Check if manual address is filled
     if (manualName && manualStreet && manualName.value && manualStreet.value) {
+        if (otDebugMode) console.log('OTE Step 1 validation - Manual address filled, valid');
         return true;
     }
     
@@ -939,30 +967,46 @@ function oteValidateStep1() {
 function submitOTE() {
     if (otDebugMode) console.log('Submitting OTE...');
     
-    // Get all data from OT fields (they are reused)
+    // Get all data from stored client data
     var clientId = oteClientData.id;
     var clientName = oteClientData.name;
     var clientVat = oteClientData.vat;
     var agentName = '<?php echo addslashes($user->name); ?>';
     var supplierName = oteSelectedSupplier.name;
     
-    // Get delivery type
-    var deliveryType = document.querySelector('input[name="otDeliveryType"]:checked').value;
+    // Get containers for OTE steps
+    var oteStep1Container = document.getElementById('oteStep1');
+    var oteStep2Container = document.getElementById('oteStep2');
     
-    // Get delivery address
+    if (!oteStep1Container || !oteStep2Container) {
+        alert('Error: No se puede acceder a los datos del formulario');
+        return;
+    }
+    
+    // Get delivery type from OTE step 1
+    var deliveryTypeRadio = oteStep1Container.querySelector('input[name="otDeliveryType"]:checked');
+    var deliveryType = deliveryTypeRadio ? deliveryTypeRadio.value : 'domicilio';
+    
+    if (otDebugMode) console.log('OTE Submit - deliveryType:', deliveryType);
+    
+    // Get delivery address from OTE step 1
     var deliveryStreet = '', deliveryCity = '';
     if (deliveryType === 'recoger') {
         deliveryStreet = 'Recoger en Oficina';
         deliveryCity = '';
     } else {
-        var deliverySelect = document.getElementById('otDeliveryAddress');
+        var deliverySelect = oteStep1Container.querySelector('#otDeliveryAddress');
         if (deliverySelect && deliverySelect.value) {
             var selectedOption = deliverySelect.options[deliverySelect.selectedIndex];
             deliveryStreet = selectedOption.dataset.street || '';
             deliveryCity = selectedOption.dataset.city || '';
+            if (otDebugMode) console.log('OTE Submit - Selected address:', deliveryStreet, deliveryCity);
         } else {
-            deliveryStreet = document.getElementById('otManualAddressStreet').value || '';
-            deliveryCity = document.getElementById('otManualAddressCity').value || '';
+            var manualStreet = oteStep1Container.querySelector('#otManualStreet');
+            var manualCity = oteStep1Container.querySelector('#otManualCity');
+            deliveryStreet = manualStreet ? (manualStreet.value || '') : '';
+            deliveryCity = manualCity ? (manualCity.value || '') : '';
+            if (otDebugMode) console.log('OTE Submit - Manual address:', deliveryStreet, deliveryCity);
         }
     }
     
@@ -972,19 +1016,24 @@ function submitOTE() {
         deliveryAddress += ', ' + deliveryCity;
     }
     
-    // Get delivery instructions
-    var deliveryInstructions = document.getElementById('otDeliveryInstructions').value || '';
+    // Get delivery instructions from OTE step 1
+    var deliveryInstructionsField = oteStep1Container.querySelector('#otDeliveryInstructions');
+    var deliveryInstructions = deliveryInstructionsField ? (deliveryInstructionsField.value || '') : '';
     
-    // Get contact person
+    // Get contact person from OTE step 2
     var contactName = '', contactPhone = '';
-    var contactSelect = document.getElementById('otContactPerson');
+    var contactSelect = oteStep2Container.querySelector('#otContactPerson');
     if (contactSelect && contactSelect.value) {
         var selectedContact = contactSelect.options[contactSelect.selectedIndex];
         contactName = selectedContact.dataset.contactName || '';
         contactPhone = selectedContact.dataset.contactPhone || '';
+        if (otDebugMode) console.log('OTE Submit - Selected contact:', contactName, contactPhone);
     } else {
-        contactName = document.getElementById('otManualContactName').value || '';
-        contactPhone = document.getElementById('otManualContactPhone').value || '';
+        var manualContactName = oteStep2Container.querySelector('#otManualContactName');
+        var manualContactPhone = oteStep2Container.querySelector('#otManualContactPhone');
+        contactName = manualContactName ? (manualContactName.value || '') : '';
+        contactPhone = manualContactPhone ? (manualContactPhone.value || '') : '';
+        if (otDebugMode) console.log('OTE Submit - Manual contact:', contactName, contactPhone);
     }
     
     // Build URL with all parameters including supplier_name
