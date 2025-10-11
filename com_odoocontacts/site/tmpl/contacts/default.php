@@ -226,7 +226,7 @@ function safeGet($array, $key, $default = '') {
                                     
                                     <button type="button" 
                                             class="btn btn-outline-info" 
-                                            onclick="openOTEWindow(<?php echo (int)safeGet($item, 'id', 0); ?>, '<?php echo addslashes(safeGet($item, 'name', 'Sin nombre')); ?>', '<?php echo addslashes(safeGet($item, 'vat', '')); ?>')" 
+                                            onclick="openOTEModal(<?php echo (int)safeGet($item, 'id', 0); ?>, '<?php echo addslashes(safeGet($item, 'name', 'Sin nombre')); ?>', '<?php echo addslashes(safeGet($item, 'vat', '')); ?>')" 
                                             title="Orden de Trabajo Externa">
                                         <i class="fas fa-external-link-alt"></i>
                                     </button>
@@ -594,6 +594,107 @@ function safeGet($array, $key, $default = '') {
     </div>
 </div>
 
+<!-- OTE (Orden de Trabajo Externa) Modal - Three Step Wizard with Supplier Selection -->
+<div class="modal fade" id="oteModal" tabindex="-1" aria-labelledby="oteModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-info text-white">
+                <h5 class="modal-title" id="oteModalLabel">
+                    <i class="fas fa-external-link-alt"></i> Crear Orden de Trabajo Externa <span id="oteStepIndicator">(Paso 1 de 3)</span>
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Progress Bar -->
+                <div class="progress mb-4" style="height: 25px;">
+                    <div id="oteProgressBar" class="progress-bar bg-info" role="progressbar" style="width: 33%;" aria-valuenow="33" aria-valuemin="0" aria-valuemax="100">
+                        Paso 1: Proveedor
+                    </div>
+                </div>
+                
+                <!-- Hidden fields to store client info -->
+                <input type="hidden" id="oteClientId" value="">
+                <input type="hidden" id="oteClientName" value="">
+                <input type="hidden" id="oteClientVat" value="">
+                
+                <!-- Step 0: Supplier Selection -->
+                <div id="oteStep0" style="display: block;">
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i>
+                        Seleccione el proveedor para esta orden de trabajo externa.
+                    </div>
+                    
+                    <!-- Client Information (Read-only) -->
+                    <div class="card mb-3">
+                        <div class="card-header">
+                            <h6 class="mb-0"><i class="fas fa-user"></i> Información del Cliente</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <strong>Cliente:</strong>
+                                    <p id="oteClientNameDisplay" class="mb-2"></p>
+                                </div>
+                                <div class="col-md-6">
+                                    <strong>NIT:</strong>
+                                    <p id="oteClientVatDisplay" class="mb-2"></p>
+                                </div>
+                                <div class="col-md-12">
+                                    <strong>Agente de Ventas:</strong>
+                                    <p id="oteAgentName" class="mb-0"><?php echo htmlspecialchars($user->name); ?></p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Supplier Selection -->
+                    <div class="mb-4">
+                        <label for="oteSupplierSelect" class="form-label">
+                            <i class="fas fa-industry"></i> Seleccionar Proveedor *
+                        </label>
+                        <select id="oteSupplierSelect" class="form-select" required>
+                            <option value="">-- Seleccione un proveedor --</option>
+                        </select>
+                        <div class="form-text">
+                            Seleccione el proveedor que realizará el trabajo externo.
+                        </div>
+                        <div id="oteSupplierLoading" class="text-center mt-2" style="display: none;">
+                            <div class="spinner-border spinner-border-sm text-info" role="status">
+                                <span class="visually-hidden">Cargando...</span>
+                            </div>
+                            Cargando proveedores...
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Step 1 & 2 will reuse OT modal structure -->
+                <!-- These divs will be populated dynamically -->
+                <div id="oteStep1" style="display: none;">
+                    <!-- Will be populated from OT Step 1 -->
+                </div>
+                
+                <div id="oteStep2" style="display: none;">
+                    <!-- Will be populated from OT Step 2 -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    Cancelar
+                </button>
+                <button type="button" id="oteBackBtn" class="btn btn-outline-secondary" onclick="oteGoBack()" style="display: none;">
+                    <i class="fas fa-arrow-left"></i> Atrás
+                </button>
+                <button type="button" id="oteNextBtn" class="btn btn-info" onclick="oteGoToNextStep()">
+                    Siguiente <i class="fas fa-arrow-right"></i>
+                </button>
+                <button type="button" id="oteSubmitBtn" class="btn btn-success" onclick="submitOTE()" style="display: none;">
+                    <i class="fas fa-check"></i> Crear Orden de Trabajo Externa
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
 // OT Modal Variables
 var otChildContacts = [];
@@ -617,19 +718,296 @@ function openCotizacionWindow(clientId, clientName, clientVat) {
     window.open(url, '_blank');
 }
 
-// Open OTE (Orden de Trabajo Externa) in new tab
-function openOTEWindow(clientId, clientName, clientVat) {
-    var agentName = '<?php echo addslashes($user->name); ?>';
+// OTE Modal Variables
+var oteSuppliers = [];
+var oteCurrentStep = 0;
+var oteSelectedSupplier = null;
+var oteClientData = {};
+
+// Open OTE Modal - Step 0: Supplier Selection
+function openOTEModal(clientId, clientName, clientVat) {
+    if (otDebugMode) console.log('Opening OTE Modal for client:', clientId, clientName);
     
-    // Build URL with parameters
+    // Store client information
+    oteClientData = {
+        id: clientId,
+        name: clientName,
+        vat: clientVat
+    };
+    
+    document.getElementById('oteClientId').value = clientId;
+    document.getElementById('oteClientName').value = clientName;
+    document.getElementById('oteClientVat').value = clientVat;
+    document.getElementById('oteClientNameDisplay').textContent = clientName;
+    document.getElementById('oteClientVatDisplay').textContent = clientVat || 'N/A';
+    
+    // Reset to step 0
+    oteCurrentStep = 0;
+    oteSelectedSupplier = null;
+    
+    // Show Step 0, hide others
+    document.getElementById('oteStep0').style.display = 'block';
+    document.getElementById('oteStep1').style.display = 'none';
+    document.getElementById('oteStep2').style.display = 'none';
+    
+    // Update progress bar
+    oteUpdateProgress();
+    
+    // Reset and fetch suppliers
+    document.getElementById('oteSupplierSelect').innerHTML = '<option value="">-- Seleccione un proveedor --</option>';
+    loadOTESuppliers();
+    
+    // Show modal
+    var oteModal = new bootstrap.Modal(document.getElementById('oteModal'));
+    oteModal.show();
+}
+
+// Load OTE Suppliers via AJAX
+function loadOTESuppliers() {
+    document.getElementById('oteSupplierLoading').style.display = 'block';
+    
+    fetch('index.php?option=com_odoocontacts&task=supplier.getOTESuppliers&<?php echo Session::getFormToken(); ?>=1')
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('oteSupplierLoading').style.display = 'none';
+            
+            if (data.success && data.suppliers) {
+                oteSuppliers = data.suppliers;
+                var select = document.getElementById('oteSupplierSelect');
+                
+                if (data.suppliers.length === 0) {
+                    select.innerHTML = '<option value="">No hay proveedores OTE disponibles</option>';
+                    select.disabled = true;
+                } else {
+                    data.suppliers.forEach(function(supplier) {
+                        var option = document.createElement('option');
+                        option.value = supplier.id;
+                        option.textContent = supplier.name + ' (' + (supplier.ref || 'Sin ref') + ')';
+                        option.dataset.supplierName = supplier.name;
+                        select.appendChild(option);
+                    });
+                }
+                
+                if (otDebugMode) console.log('Loaded', data.suppliers.length, 'OTE suppliers');
+            } else {
+                alert('Error al cargar proveedores: ' + (data.message || 'Error desconocido'));
+            }
+        })
+        .catch(error => {
+            document.getElementById('oteSupplierLoading').style.display = 'none';
+            console.error('Error loading suppliers:', error);
+            alert('Error al cargar proveedores. Por favor intente de nuevo.');
+        });
+}
+
+// OTE Go to Next Step
+function oteGoToNextStep() {
+    if (oteCurrentStep === 0) {
+        // Validate supplier selection
+        var supplierSelect = document.getElementById('oteSupplierSelect');
+        if (!supplierSelect.value) {
+            alert('Por favor seleccione un proveedor');
+            return;
+        }
+        
+        // Store selected supplier
+        var selectedOption = supplierSelect.options[supplierSelect.selectedIndex];
+        oteSelectedSupplier = {
+            id: supplierSelect.value,
+            name: selectedOption.dataset.supplierName
+        };
+        
+        if (otDebugMode) console.log('Selected supplier:', oteSelectedSupplier);
+        
+        // Move to Step 1 (Delivery) - Reuse OT logic
+        oteCurrentStep = 1;
+        oteShowStep(1);
+        
+        // Initialize delivery addresses (reuse OT function)
+        populateDeliveryAddresses(oteClientData.id);
+        
+    } else if (oteCurrentStep === 1) {
+        // Validate and move to Step 2 (Contact) - Same as OT
+        if (oteValidateStep1()) {
+            oteCurrentStep = 2;
+            oteShowStep(2);
+            
+            // Initialize contact persons (reuse OT function)
+            populateContactPersons(oteClientData.id);
+        }
+    }
+}
+
+// OTE Go Back
+function oteGoBack() {
+    if (oteCurrentStep > 0) {
+        oteCurrentStep--;
+        oteShowStep(oteCurrentStep);
+    }
+}
+
+// OTE Show Step
+function oteShowStep(step) {
+    // Hide all steps
+    document.getElementById('oteStep0').style.display = 'none';
+    document.getElementById('oteStep1').style.display = 'none';
+    document.getElementById('oteStep2').style.display = 'none';
+    
+    // Show current step
+    if (step === 0) {
+        document.getElementById('oteStep0').style.display = 'block';
+    } else if (step === 1) {
+        // Copy OT Step 1 content
+        var otStep1Content = document.getElementById('otStep1').cloneNode(true);
+        otStep1Content.id = 'oteStep1Content';
+        document.getElementById('oteStep1').innerHTML = '';
+        document.getElementById('oteStep1').appendChild(otStep1Content);
+        document.getElementById('oteStep1').style.display = 'block';
+    } else if (step === 2) {
+        // Copy OT Step 2 content
+        var otStep2Content = document.getElementById('otStep2').cloneNode(true);
+        otStep2Content.id = 'oteStep2Content';
+        document.getElementById('oteStep2').innerHTML = '';
+        document.getElementById('oteStep2').appendChild(otStep2Content);
+        document.getElementById('oteStep2').style.display = 'block';
+    }
+    
+    oteUpdateProgress();
+}
+
+// OTE Update Progress
+function oteUpdateProgress() {
+    var stepIndicator = document.getElementById('oteStepIndicator');
+    var progressBar = document.getElementById('oteProgressBar');
+    var backBtn = document.getElementById('oteBackBtn');
+    var nextBtn = document.getElementById('oteNextBtn');
+    var submitBtn = document.getElementById('oteSubmitBtn');
+    
+    if (oteCurrentStep === 0) {
+        stepIndicator.textContent = '(Paso 1 de 3)';
+        progressBar.style.width = '33%';
+        progressBar.setAttribute('aria-valuenow', '33');
+        progressBar.textContent = 'Paso 1: Proveedor';
+        backBtn.style.display = 'none';
+        nextBtn.style.display = 'inline-block';
+        submitBtn.style.display = 'none';
+    } else if (oteCurrentStep === 1) {
+        stepIndicator.textContent = '(Paso 2 de 3)';
+        progressBar.style.width = '66%';
+        progressBar.setAttribute('aria-valuenow', '66');
+        progressBar.textContent = 'Paso 2: Dirección de Entrega';
+        backBtn.style.display = 'inline-block';
+        nextBtn.style.display = 'inline-block';
+        submitBtn.style.display = 'none';
+    } else if (oteCurrentStep === 2) {
+        stepIndicator.textContent = '(Paso 3 de 3)';
+        progressBar.style.width = '100%';
+        progressBar.setAttribute('aria-valuenow', '100');
+        progressBar.textContent = 'Paso 3: Contacto';
+        backBtn.style.display = 'inline-block';
+        nextBtn.style.display = 'none';
+        submitBtn.style.display = 'inline-block';
+    }
+}
+
+// OTE Validate Step 1 (Delivery)
+function oteValidateStep1() {
+    // Reuse OT validation logic
+    var deliveryType = document.querySelector('input[name="otDeliveryType"]:checked').value;
+    
+    if (deliveryType === 'recoger') {
+        return true; // No address validation needed for pickup
+    }
+    
+    var deliverySelect = document.getElementById('otDeliveryAddress');
+    var manualName = document.getElementById('otManualAddressName');
+    var manualStreet = document.getElementById('otManualAddressStreet');
+    
+    if (deliverySelect && deliverySelect.value) {
+        return true;
+    }
+    
+    if (manualName && manualStreet && manualName.value && manualStreet.value) {
+        return true;
+    }
+    
+    alert('Por favor seleccione o ingrese una dirección de entrega');
+    return false;
+}
+
+// Submit OTE with all data
+function submitOTE() {
+    if (otDebugMode) console.log('Submitting OTE...');
+    
+    // Get all data from OT fields (they are reused)
+    var clientId = oteClientData.id;
+    var clientName = oteClientData.name;
+    var clientVat = oteClientData.vat;
+    var agentName = '<?php echo addslashes($user->name); ?>';
+    var supplierName = oteSelectedSupplier.name;
+    
+    // Get delivery type
+    var deliveryType = document.querySelector('input[name="otDeliveryType"]:checked').value;
+    
+    // Get delivery address
+    var deliveryStreet = '', deliveryCity = '';
+    if (deliveryType === 'recoger') {
+        deliveryStreet = 'Recoger en Oficina';
+        deliveryCity = '';
+    } else {
+        var deliverySelect = document.getElementById('otDeliveryAddress');
+        if (deliverySelect && deliverySelect.value) {
+            var selectedOption = deliverySelect.options[deliverySelect.selectedIndex];
+            deliveryStreet = selectedOption.dataset.street || '';
+            deliveryCity = selectedOption.dataset.city || '';
+        } else {
+            deliveryStreet = document.getElementById('otManualAddressStreet').value || '';
+            deliveryCity = document.getElementById('otManualAddressCity').value || '';
+        }
+    }
+    
+    // Merge street and city
+    var deliveryAddress = deliveryStreet;
+    if (deliveryCity && deliveryType !== 'recoger') {
+        deliveryAddress += ', ' + deliveryCity;
+    }
+    
+    // Get delivery instructions
+    var deliveryInstructions = document.getElementById('otDeliveryInstructions').value || '';
+    
+    // Get contact person
+    var contactName = '', contactPhone = '';
+    var contactSelect = document.getElementById('otContactPerson');
+    if (contactSelect && contactSelect.value) {
+        var selectedContact = contactSelect.options[contactSelect.selectedIndex];
+        contactName = selectedContact.dataset.contactName || '';
+        contactPhone = selectedContact.dataset.contactPhone || '';
+    } else {
+        contactName = document.getElementById('otManualContactName').value || '';
+        contactPhone = document.getElementById('otManualContactPhone').value || '';
+    }
+    
+    // Build URL with all parameters including supplier_name
     var url = oteDestinationUrl;
-    url += '?client_id=' + encodeURIComponent(clientId);
+    url += '?supplier_name=' + encodeURIComponent(supplierName);
+    url += '&client_id=' + encodeURIComponent(clientId);
     url += '&contact_name=' + encodeURIComponent(clientName);
     url += '&contact_vat=' + encodeURIComponent(clientVat);
     url += '&x_studio_agente_de_ventas=' + encodeURIComponent(agentName);
+    url += '&tipo_entrega=' + encodeURIComponent(deliveryType);
+    url += '&delivery_address=' + encodeURIComponent(deliveryAddress);
+    url += '&instrucciones_entrega=' + encodeURIComponent(deliveryInstructions);
+    url += '&contact_person_name=' + encodeURIComponent(contactName);
+    url += '&contact_person_phone=' + encodeURIComponent(contactPhone);
+    
+    if (otDebugMode) console.log('OTE URL:', url);
     
     // Open in new tab
     window.open(url, '_blank');
+    
+    // Close modal
+    var oteModal = bootstrap.Modal.getInstance(document.getElementById('oteModal'));
+    oteModal.hide();
 }
 
 // Open OT Modal
