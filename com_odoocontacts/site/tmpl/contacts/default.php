@@ -817,16 +817,20 @@ function oteGoToNextStep() {
             name: selectedOption.dataset.supplierName
         };
         
-        if (otDebugMode) console.log('OTE: Selected supplier:', oteSelectedSupplier);
+        console.log('OTE: Selected supplier:', oteSelectedSupplier);
         
         // Move to Step 1 (Delivery) - Reuse OT logic
         oteCurrentStep = 1;
+        console.log('OTE: About to call oteShowStep(1)');
         oteShowStep(1);
+        console.log('OTE: oteShowStep(1) completed');
         
         // Small delay to ensure DOM is ready after cloning
+        console.log('OTE: Setting setTimeout to load delivery addresses in 100ms');
         setTimeout(function() {
-            if (otDebugMode) console.log('OTE: Loading delivery addresses after DOM update');
+            console.log('OTE: setTimeout fired! Now loading delivery addresses for client:', oteClientData.id);
             oteLoadDeliveryAddresses(oteClientData.id);
+            console.log('OTE: oteLoadDeliveryAddresses() called');
         }, 100);
         
     } else if (oteCurrentStep === 1) {
@@ -846,32 +850,48 @@ function oteGoToNextStep() {
 
 // OTE Load Delivery Addresses (scoped to OTE modal)
 function oteLoadDeliveryAddresses(clientId) {
-    if (otDebugMode) console.log('OTE: Loading delivery addresses for client:', clientId);
+    console.log('OTE: ===== oteLoadDeliveryAddresses() START =====');
+    console.log('OTE: Loading delivery addresses for client:', clientId);
     
     // Find the select element within the OTE Step 1 container
     var oteStep1Container = document.getElementById('oteStep1');
+    console.log('OTE: oteStep1Container:', oteStep1Container);
     if (!oteStep1Container) {
-        console.error('OTE Step 1 container not found');
+        console.error('OTE Step 1 container not found - RETURNING EARLY');
         return;
     }
     
     var select = oteStep1Container.querySelector('#otDeliveryAddress');
+    console.log('OTE: Delivery select element:', select);
     if (!select) {
-        console.error('Delivery address select not found in OTE Step 1');
+        console.error('Delivery address select not found in OTE Step 1 - RETURNING EARLY');
         return;
     }
     
+    console.log('OTE: Setting select to show "Cargando direcciones..."');
     select.innerHTML = '<option value="">Cargando direcciones...</option>';
+    console.log('OTE: Select innerHTML set, current value:', select.innerHTML);
     
     // Fetch child contacts for this client
-    fetch('index.php?option=com_odoocontacts&task=contact.getChildContacts&id=' + clientId + '&<?php echo Session::getFormToken(); ?>=1')
-        .then(response => response.json())
+    console.log('OTE: About to fetch child contacts from server...');
+    var fetchUrl = 'index.php?option=com_odoocontacts&task=contact.getChildContacts&id=' + clientId + '&<?php echo Session::getFormToken(); ?>=1';
+    console.log('OTE: Fetch URL:', fetchUrl);
+    
+    fetch(fetchUrl)
+        .then(response => {
+            console.log('OTE: Fetch response received, status:', response.status);
+            return response.json();
+        })
         .then(data => {
-            if (otDebugMode) console.log('OTE: Child contacts received:', data);
+            console.log('OTE: Child contacts data received:', data);
+            console.log('OTE: data.success:', data.success);
+            console.log('OTE: data.contacts:', data.contacts);
+            console.log('OTE: data.contacts.length:', data.contacts ? data.contacts.length : 'N/A');
             
             select.innerHTML = '<option value="">Seleccione una dirección...</option>';
             
             if (!data.success || !data.contacts || data.contacts.length === 0) {
+                console.log('OTE: No addresses found, showing manual input message');
                 select.innerHTML = '<option value="">No hay direcciones disponibles - use campos manuales abajo</option>';
                 return;
             }
