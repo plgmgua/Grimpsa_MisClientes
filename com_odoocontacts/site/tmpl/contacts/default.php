@@ -1123,7 +1123,10 @@ function oteAttachStep1Listeners() {
             console.log('OTE: Domicilio radio changed, checked:', this.checked);
             if (this.checked) {
                 deliveryAddressContainer.style.display = 'block';
+                deliveryAddressContainer.style.setProperty('display', 'block', 'important');
                 console.log('OTE: Set deliveryAddressContainer to BLOCK');
+                console.log('OTE: Actual computed display:', window.getComputedStyle(deliveryAddressContainer).display);
+                console.log('OTE: Container classes:', deliveryAddressContainer.className);
             }
         });
         
@@ -1132,7 +1135,10 @@ function oteAttachStep1Listeners() {
             console.log('OTE: Recoger radio changed, checked:', this.checked);
             if (this.checked) {
                 deliveryAddressContainer.style.display = 'none';
+                deliveryAddressContainer.style.setProperty('display', 'none', 'important');
                 console.log('OTE: Set deliveryAddressContainer to NONE');
+                console.log('OTE: Actual computed display:', window.getComputedStyle(deliveryAddressContainer).display);
+                console.log('OTE: Container classes:', deliveryAddressContainer.className);
             }
         });
         
@@ -1140,15 +1146,21 @@ function oteAttachStep1Listeners() {
         console.log('OTE: Setting initial visibility state');
         if (deliveryTypeDomicilio.checked) {
             deliveryAddressContainer.style.display = 'block';
+            deliveryAddressContainer.style.setProperty('display', 'block', 'important');
             console.log('OTE: Initial state - Domicilio checked, container set to BLOCK');
+            console.log('OTE: Initial computed display:', window.getComputedStyle(deliveryAddressContainer).display);
         } else if (deliveryTypeRecoger.checked) {
             deliveryAddressContainer.style.display = 'none';
+            deliveryAddressContainer.style.setProperty('display', 'none', 'important');
             console.log('OTE: Initial state - Recoger checked, container set to NONE');
+            console.log('OTE: Initial computed display:', window.getComputedStyle(deliveryAddressContainer).display);
         } else {
             // Default to domicilio if nothing is checked
             deliveryTypeDomicilio.checked = true;
             deliveryAddressContainer.style.display = 'block';
+            deliveryAddressContainer.style.setProperty('display', 'block', 'important');
             console.log('OTE: Initial state - Nothing checked, defaulting to Domicilio, container set to BLOCK');
+            console.log('OTE: Initial computed display:', window.getComputedStyle(deliveryAddressContainer).display);
         }
         
         console.log('OTE Step 1 - Event listeners attached successfully');
