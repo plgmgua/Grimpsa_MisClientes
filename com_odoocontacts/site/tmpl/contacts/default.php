@@ -862,6 +862,22 @@ function oteShowStep(step) {
         otStep1Content.id = 'oteStep1Content';
         document.getElementById('oteStep1').innerHTML = '';
         document.getElementById('oteStep1').appendChild(otStep1Content);
+        
+        // Populate client information in the cloned content
+        var clientNameEl = document.getElementById('oteStep1').querySelector('#otClientName');
+        var clientVatEl = document.getElementById('oteStep1').querySelector('#otClientVat');
+        
+        if (clientNameEl) {
+            clientNameEl.textContent = oteClientData.name;
+        }
+        if (clientVatEl) {
+            clientVatEl.textContent = oteClientData.vat || 'N/A';
+        }
+        
+        if (otDebugMode) {
+            console.log('OTE Step 1 - Populated client info:', oteClientData.name, oteClientData.vat);
+        }
+        
         document.getElementById('oteStep1').style.display = 'block';
     } else if (step === 2) {
         // Copy OT Step 2 content
@@ -869,6 +885,22 @@ function oteShowStep(step) {
         otStep2Content.id = 'oteStep2Content';
         document.getElementById('oteStep2').innerHTML = '';
         document.getElementById('oteStep2').appendChild(otStep2Content);
+        
+        // Populate client information in the cloned content (if it exists in step 2)
+        var clientNameEl2 = document.getElementById('oteStep2').querySelector('#otClientName');
+        var clientVatEl2 = document.getElementById('oteStep2').querySelector('#otClientVat');
+        
+        if (clientNameEl2) {
+            clientNameEl2.textContent = oteClientData.name;
+        }
+        if (clientVatEl2) {
+            clientVatEl2.textContent = oteClientData.vat || 'N/A';
+        }
+        
+        if (otDebugMode) {
+            console.log('OTE Step 2 - Populated client info:', oteClientData.name, oteClientData.vat);
+        }
+        
         document.getElementById('oteStep2').style.display = 'block';
     }
     
