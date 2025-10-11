@@ -836,13 +836,63 @@ function oteGoToNextStep() {
     } else if (oteCurrentStep === 1) {
         // Validate and move to Step 2 (Contact) - Same as OT
         if (oteValidateStep1()) {
+            // Collect delivery data from Step 1 before moving to Step 2
+            var oteStep1Container = document.getElementById('oteStep1');
+            
+            // Get delivery type
+            var deliveryTypeRadio = oteStep1Container.querySelector('input[name="otDeliveryType"]:checked');
+            var deliveryType = deliveryTypeRadio ? deliveryTypeRadio.value : 'domicilio';
+            
+            // Get delivery address
+            var deliveryStreet = '', deliveryCity = '';
+            if (deliveryType === 'recoger') {
+                deliveryStreet = 'Recoger en Oficina';
+                deliveryCity = '';
+            } else {
+                var deliverySelect = oteStep1Container.querySelector('#otDeliveryAddress');
+                if (deliverySelect && deliverySelect.value) {
+                    var selectedOption = deliverySelect.options[deliverySelect.selectedIndex];
+                    deliveryStreet = selectedOption.dataset.street || '';
+                    deliveryCity = selectedOption.dataset.city || '';
+                } else {
+                    var manualStreet = oteStep1Container.querySelector('#otManualStreet');
+                    var manualCity = oteStep1Container.querySelector('#otManualCity');
+                    deliveryStreet = manualStreet ? (manualStreet.value || '') : '';
+                    deliveryCity = manualCity ? (manualCity.value || '') : '';
+                }
+            }
+            
+            // Get delivery instructions
+            var deliveryInstructionsField = oteStep1Container.querySelector('#otDeliveryInstructions');
+            var deliveryInstructions = deliveryInstructionsField ? (deliveryInstructionsField.value || 'Ninguna') : 'Ninguna';
+            
+            // Move to Step 2
             oteCurrentStep = 2;
             oteShowStep(2);
             
-            // Small delay to ensure DOM is ready
+            // Small delay to ensure DOM is ready, then update summary
             setTimeout(function() {
                 if (otDebugMode) console.log('OTE: Loading contact persons after DOM update');
                 oteLoadContactPersons(oteClientData.id);
+                
+                // Update summary with collected data
+                var oteStep2Container = document.getElementById('oteStep2');
+                var summaryAddress = oteStep2Container.querySelector('#otSummaryAddress');
+                var summaryInstructions = oteStep2Container.querySelector('#otSummaryInstructions');
+                
+                if (summaryAddress) {
+                    var fullAddress = deliveryStreet;
+                    if (deliveryCity && deliveryType !== 'recoger') {
+                        fullAddress += ', ' + deliveryCity;
+                    }
+                    summaryAddress.textContent = fullAddress || 'No especificada';
+                    console.log('OTE: Updated summary address:', fullAddress);
+                }
+                
+                if (summaryInstructions) {
+                    summaryInstructions.textContent = deliveryInstructions;
+                    console.log('OTE: Updated summary instructions:', deliveryInstructions);
+                }
             }, 100);
         }
     }
@@ -1123,6 +1173,13 @@ function oteShowStep(step) {
         if (clientVatEl2) {
             clientVatEl2.textContent = oteClientData.vat || 'N/A';
             console.log('OTE Step 2 - Set client VAT:', oteClientData.vat);
+        }
+        
+        // Change summary title to "Orden de Trabajo Externa"
+        var summaryTitle = oteStep2Container.querySelector('.card-header h6');
+        if (summaryTitle) {
+            summaryTitle.innerHTML = '<i class="fas fa-clipboard-check"></i> Resumen de Orden de Trabajo Externa';
+            console.log('OTE Step 2 - Changed summary title to "Orden de Trabajo Externa"');
         }
         
         console.log('OTE Step 2 - Populated client info:', oteClientData.name, oteClientData.vat);
