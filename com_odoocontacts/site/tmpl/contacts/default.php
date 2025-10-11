@@ -949,22 +949,28 @@ function oteLoadDeliveryAddresses(clientId) {
 
 // OTE Load Contact Persons (scoped to OTE modal)
 function oteLoadContactPersons(clientId) {
-    if (otDebugMode) console.log('OTE: Loading contact persons for client:', clientId);
+    console.log('OTE: ===== oteLoadContactPersons() START =====');
+    console.log('OTE: Loading contact persons for client:', clientId);
     
     // Find the select element within the OTE Step 2 container
     var oteStep2Container = document.getElementById('oteStep2');
+    console.log('OTE: oteStep2Container:', oteStep2Container);
     if (!oteStep2Container) {
-        console.error('OTE Step 2 container not found');
+        console.error('OTE Step 2 container not found - RETURNING EARLY');
         return;
     }
     
-    var select = oteStep2Container.querySelector('#otContactPerson');
+    // BUGFIX: The correct ID is otContactSelect, not otContactPerson!
+    var select = oteStep2Container.querySelector('#otContactSelect');
+    console.log('OTE: Contact select element:', select);
     if (!select) {
-        console.error('Contact person select not found in OTE Step 2');
+        console.error('Contact person select (#otContactSelect) not found in OTE Step 2 - RETURNING EARLY');
         return;
     }
     
+    console.log('OTE: Setting select to show "Cargando contactos..."');
     select.innerHTML = '<option value="">Cargando contactos...</option>';
+    console.log('OTE: Select innerHTML set');
     
     // Fetch child contacts and parent contact
     Promise.all([
@@ -1233,10 +1239,10 @@ function oteAttachStep2Listeners() {
         return;
     }
     
-    if (otDebugMode) console.log('OTE Step 2 - Attaching listeners');
+    console.log('OTE Step 2 - Attaching listeners');
     
-    // Attach listener for contact person dropdown
-    var contactSelect = oteStep2Container.querySelector('#otContactPerson');
+    // Attach listener for contact person dropdown (BUGFIX: use otContactSelect, not otContactPerson)
+    var contactSelect = oteStep2Container.querySelector('#otContactSelect');
     if (contactSelect) {
         contactSelect.addEventListener('change', function() {
             var selectedOption = this.options[this.selectedIndex];
@@ -1405,7 +1411,8 @@ function submitOTE() {
     
     // Get contact person from OTE step 2
     var contactName = '', contactPhone = '';
-    var contactSelect = oteStep2Container.querySelector('#otContactPerson');
+    // BUGFIX: use otContactSelect, not otContactPerson
+    var contactSelect = oteStep2Container.querySelector('#otContactSelect');
     if (contactSelect && contactSelect.value) {
         var selectedContact = contactSelect.options[contactSelect.selectedIndex];
         contactName = selectedContact.dataset.contactName || '';
