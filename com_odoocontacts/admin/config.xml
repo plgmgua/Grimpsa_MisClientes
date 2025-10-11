@@ -66,6 +66,14 @@
             required="false"
         />
         <field
+            name="ote_destination_url"
+            type="text"
+            label="COM_ODOOCONTACTS_CONFIG_OTE_DESTINATION_URL_LABEL"
+            description="COM_ODOOCONTACTS_CONFIG_OTE_DESTINATION_URL_DESC"
+            default="https://grimpsa_webserver.grantsolutions.cc/index.php/orden-de-trabajo-externa"
+            required="false"
+        />
+        <field
             name="ot_destination_url"
             type="text"
             label="COM_ODOOCONTACTS_CONFIG_OT_DESTINATION_URL_LABEL"
