@@ -1330,6 +1330,18 @@ function oteAttachStep1Listeners() {
         });
     }
     
+    // Attach click listener to save address button (override the onclick attribute)
+    var saveAddressButton = oteStep1Container.querySelector('#otSaveAddressButtonContainer button');
+    if (saveAddressButton) {
+        console.log('OTE: Attaching click listener to save address button');
+        // Remove the onclick attribute to prevent calling the OT function
+        saveAddressButton.removeAttribute('onclick');
+        saveAddressButton.addEventListener('click', function(event) {
+            event.preventDefault();
+            oteSaveDeliveryAddressNow(event.target);
+        });
+    }
+    
     console.log('OTE Step 1 - All event listeners attached');
 }
 
@@ -1384,6 +1396,18 @@ function oteAttachStep2Listeners() {
     if (manualContactPhone) {
         manualContactPhone.addEventListener('input', function() {
             oteToggleSaveContactButton();
+        });
+    }
+    
+    // Attach click listener to save contact button (override the onclick attribute)
+    var saveContactButton = oteStep2Container.querySelector('#otSaveContactButtonContainer button');
+    if (saveContactButton) {
+        console.log('OTE: Attaching click listener to save contact button');
+        // Remove the onclick attribute to prevent calling the OT function
+        saveContactButton.removeAttribute('onclick');
+        saveContactButton.addEventListener('click', function(event) {
+            event.preventDefault();
+            oteSaveContactNow(event.target);
         });
     }
     
@@ -2252,6 +2276,172 @@ function saveContactNow() {
       .catch(error => {
           showNotification('Error de conexión. Por favor contacte a soporte.', 'danger');
           if (otDebugMode) console.error('Error saving contact:', error);
+          
+          // Re-enable button
+          saveBtn.disabled = false;
+          saveBtn.innerHTML = '<i class="fas fa-save"></i> Guardar Contacto';
+      });
+}
+
+// OTE-specific: Save delivery address to Odoo now (from OTE modal)
+function oteSaveDeliveryAddressNow(saveBtn) {
+    var oteStep1Container = document.getElementById('oteStep1');
+    if (!oteStep1Container) {
+        console.error('OTE: oteStep1Container not found');
+        return;
+    }
+    
+    var clientId = oteClientData.id;
+    var addressNameField = oteStep1Container.querySelector('#otManualAddressName');
+    var streetField = oteStep1Container.querySelector('#otManualStreet');
+    var cityField = oteStep1Container.querySelector('#otManualCity');
+    var agentName = '<?php echo addslashes($user->name); ?>';
+    
+    var addressName = addressNameField ? addressNameField.value.trim() : '';
+    var street = streetField ? streetField.value.trim() : '';
+    var city = cityField ? cityField.value.trim() : '';
+    
+    // Validate inputs
+    if (!addressName || !street || !city) {
+        showNotification('Por favor complete todos los campos de dirección', 'warning');
+        return;
+    }
+    
+    // Disable button while saving
+    saveBtn.disabled = true;
+    saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
+    
+    var formData = new FormData();
+    formData.append('parent_id', clientId);
+    formData.append('name', addressName);
+    formData.append('street', street);
+    formData.append('city', city);
+    formData.append('type', 'delivery');
+    formData.append('x_studio_agente_de_ventas', agentName);
+    formData.append('<?php echo Session::getFormToken(); ?>', '1');
+    
+    fetch('<?php echo Route::_("index.php?option=com_odoocontacts&task=contact.saveDeliveryAddressAsync&format=json"); ?>', {
+        method: 'POST',
+        body: formData
+    }).then(response => response.json())
+      .then(data => {
+          if (data.success) {
+              showNotification('Dirección guardada exitosamente', 'success');
+              
+              // Add new address to dropdown
+              var select = oteStep1Container.querySelector('#otDeliveryAddress');
+              if (select) {
+                  var option = document.createElement('option');
+                  option.value = data.address_id || 'new';
+                  option.textContent = addressName + ' - ' + street;
+                  option.dataset.street = street;
+                  option.dataset.city = city;
+                  option.selected = true;
+                  select.appendChild(option);
+              }
+              
+              // Clear manual inputs and hide button
+              if (addressNameField) addressNameField.value = '';
+              if (streetField) streetField.value = '';
+              if (cityField) cityField.value = '';
+              
+              var checkbox = oteStep1Container.querySelector('#otSaveAddressToOdoo');
+              if (checkbox) checkbox.checked = false;
+              
+              var buttonContainer = oteStep1Container.querySelector('#otSaveAddressButtonContainer');
+              if (buttonContainer) buttonContainer.style.display = 'none';
+          } else {
+              showNotification('Error al guardar: ' + (data.message || 'Error desconocido') + '. Por favor contacte a soporte.', 'danger');
+          }
+          
+          // Re-enable button
+          saveBtn.disabled = false;
+          saveBtn.innerHTML = '<i class="fas fa-save"></i> Guardar Dirección';
+      })
+      .catch(error => {
+          showNotification('Error de conexión. Por favor contacte a soporte.', 'danger');
+          if (otDebugMode) console.error('OTE: Error saving delivery address:', error);
+          
+          // Re-enable button
+          saveBtn.disabled = false;
+          saveBtn.innerHTML = '<i class="fas fa-save"></i> Guardar Dirección';
+      });
+}
+
+// OTE-specific: Save contact to Odoo now (from OTE modal)
+function oteSaveContactNow(saveBtn) {
+    var oteStep2Container = document.getElementById('oteStep2');
+    if (!oteStep2Container) {
+        console.error('OTE: oteStep2Container not found');
+        return;
+    }
+    
+    var clientId = oteClientData.id;
+    var contactNameField = oteStep2Container.querySelector('#otManualContactName');
+    var contactPhoneField = oteStep2Container.querySelector('#otManualContactPhone');
+    var agentName = '<?php echo addslashes($user->name); ?>';
+    
+    var contactName = contactNameField ? contactNameField.value.trim() : '';
+    var contactPhone = contactPhoneField ? contactPhoneField.value.trim() : '';
+    
+    // Validate inputs
+    if (!contactName || !contactPhone) {
+        showNotification('Por favor complete nombre y teléfono del contacto', 'warning');
+        return;
+    }
+    
+    // Disable button while saving
+    saveBtn.disabled = true;
+    saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
+    
+    var formData = new FormData();
+    formData.append('parent_id', clientId);
+    formData.append('name', contactName);
+    formData.append('phone', contactPhone);
+    formData.append('type', 'contact');
+    formData.append('x_studio_agente_de_ventas', agentName);
+    formData.append('<?php echo Session::getFormToken(); ?>', '1');
+    
+    fetch('<?php echo Route::_("index.php?option=com_odoocontacts&task=contact.saveChildContactAsync&format=json"); ?>', {
+        method: 'POST',
+        body: formData
+    }).then(response => response.json())
+      .then(data => {
+          if (data.success) {
+              showNotification('Contacto guardado exitosamente', 'success');
+              
+              // Add new contact to dropdown
+              var select = oteStep2Container.querySelector('#otContactSelect');
+              if (select) {
+                  var option = document.createElement('option');
+                  option.value = data.contact_id || 'new';
+                  option.textContent = contactName;
+                  option.dataset.contactName = contactName;
+                  option.dataset.contactPhone = contactPhone;
+                  option.selected = true;
+                  select.appendChild(option);
+              }
+              
+              // Clear manual inputs and hide button
+              if (contactNameField) contactNameField.value = '';
+              if (contactPhoneField) contactPhoneField.value = '';
+              
+              var checkbox = oteStep2Container.querySelector('#otSaveContactToOdoo');
+              if (checkbox) checkbox.checked = false;
+              
+              var buttonContainer = oteStep2Container.querySelector('#otSaveContactButtonContainer');
+              if (buttonContainer) buttonContainer.style.display = 'none';
+          } else {
+              showNotification('Error al guardar: ' + (data.message || 'Error desconocido') + '. Por favor contacte a soporte.', 'danger');
+          }
+          
+          // Re-enable button
+          saveBtn.disabled = false;
+          saveBtn.innerHTML = '<i class="fas fa-save"></i> Guardar Contacto';
+      })
+      .catch(error => {
+          showNotification('Error de conexión. Por favor contacte a soporte.', 'danger');
+          if (otDebugMode) console.error('OTE: Error saving contact:', error);
           
           // Re-enable button
           saveBtn.disabled = false;
