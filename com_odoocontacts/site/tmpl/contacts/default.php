@@ -214,7 +214,7 @@ function safeGet($array, $key, $default = '') {
                                             class="btn btn-outline-warning" 
                                             onclick="openCotizacionWindow(<?php echo (int)safeGet($item, 'id', 0); ?>, '<?php echo addslashes(safeGet($item, 'name', 'Sin nombre')); ?>', '<?php echo addslashes(safeGet($item, 'vat', '')); ?>')" 
                                             title="Cotización">
-                                        <strong>Q.</strong>
+                                        <i class="fas fa-file-invoice-dollar"></i>
                                     </button>
                                     
                                     <button type="button" 
