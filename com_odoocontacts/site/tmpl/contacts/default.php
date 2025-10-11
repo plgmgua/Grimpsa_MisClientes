@@ -1298,6 +1298,39 @@ function oteAttachStep1Listeners() {
     } else {
         console.error('OTE: Delivery select not found in Step 1 container');
     }
+    
+    // Attach listeners for manual delivery address save functionality
+    var saveAddressCheckbox = oteStep1Container.querySelector('#otSaveAddressToOdoo');
+    var manualAddressName = oteStep1Container.querySelector('#otManualAddressName');
+    var manualStreet = oteStep1Container.querySelector('#otManualStreet');
+    var manualCity = oteStep1Container.querySelector('#otManualCity');
+    
+    if (saveAddressCheckbox) {
+        console.log('OTE: Attaching checkbox listener for manual address save');
+        saveAddressCheckbox.addEventListener('change', function() {
+            oteToggleSaveAddressButton();
+        });
+    }
+    
+    if (manualAddressName) {
+        manualAddressName.addEventListener('input', function() {
+            oteToggleSaveAddressButton();
+        });
+    }
+    
+    if (manualStreet) {
+        manualStreet.addEventListener('input', function() {
+            oteToggleSaveAddressButton();
+        });
+    }
+    
+    if (manualCity) {
+        manualCity.addEventListener('input', function() {
+            oteToggleSaveAddressButton();
+        });
+    }
+    
+    console.log('OTE Step 1 - All event listeners attached');
 }
 
 // OTE Attach Step 2 Event Listeners (for cloned content)
@@ -1330,7 +1363,31 @@ function oteAttachStep2Listeners() {
         });
     }
     
-    if (otDebugMode) console.log('OTE Step 2 - Event listeners attached');
+    // Attach listeners for manual contact save functionality
+    var saveContactCheckbox = oteStep2Container.querySelector('#otSaveContactToOdoo');
+    var manualContactName = oteStep2Container.querySelector('#otManualContactName');
+    var manualContactPhone = oteStep2Container.querySelector('#otManualContactPhone');
+    
+    if (saveContactCheckbox) {
+        console.log('OTE: Attaching checkbox listener for manual contact save');
+        saveContactCheckbox.addEventListener('change', function() {
+            oteToggleSaveContactButton();
+        });
+    }
+    
+    if (manualContactName) {
+        manualContactName.addEventListener('input', function() {
+            oteToggleSaveContactButton();
+        });
+    }
+    
+    if (manualContactPhone) {
+        manualContactPhone.addEventListener('input', function() {
+            oteToggleSaveContactButton();
+        });
+    }
+    
+    if (otDebugMode) console.log('OTE Step 2 - All event listeners attached');
 }
 
 // OTE Update Progress
@@ -1819,6 +1876,43 @@ function toggleSaveAddressButton() {
     }
 }
 
+// OTE-specific version: Toggle save address button visibility in OTE modal
+function oteToggleSaveAddressButton() {
+    var oteStep1Container = document.getElementById('oteStep1');
+    if (!oteStep1Container) {
+        console.error('OTE: oteStep1Container not found in oteToggleSaveAddressButton');
+        return;
+    }
+    
+    var checkbox = oteStep1Container.querySelector('#otSaveAddressToOdoo');
+    var nameField = oteStep1Container.querySelector('#otManualAddressName');
+    var streetField = oteStep1Container.querySelector('#otManualStreet');
+    var cityField = oteStep1Container.querySelector('#otManualCity');
+    var buttonContainer = oteStep1Container.querySelector('#otSaveAddressButtonContainer');
+    
+    if (!checkbox || !nameField || !streetField || !cityField || !buttonContainer) {
+        console.error('OTE: Could not find all required elements for address save button toggle');
+        return;
+    }
+    
+    var name = nameField.value.trim();
+    var street = streetField.value.trim();
+    var city = cityField.value.trim();
+    
+    if (otDebugMode) {
+        console.log('OTE Toggle Address Button - Checkbox:', checkbox.checked, 'Name:', name, 'Street:', street, 'City:', city);
+    }
+    
+    // Show button only if checkbox is checked AND all manual fields have values
+    if (checkbox.checked && name && street && city) {
+        if (otDebugMode) console.log('OTE: Showing address save button');
+        buttonContainer.style.display = 'block';
+    } else {
+        if (otDebugMode) console.log('OTE: Hiding address save button');
+        buttonContainer.style.display = 'none';
+    }
+}
+
 // Toggle save contact button visibility
 function toggleSaveContactButton() {
     var checkbox = document.getElementById('otSaveContactToOdoo');
@@ -1836,6 +1930,41 @@ function toggleSaveContactButton() {
         buttonContainer.style.display = 'block';
     } else {
         if (otDebugMode) console.log('Hiding contact save button');
+        buttonContainer.style.display = 'none';
+    }
+}
+
+// OTE-specific version: Toggle save contact button visibility in OTE modal
+function oteToggleSaveContactButton() {
+    var oteStep2Container = document.getElementById('oteStep2');
+    if (!oteStep2Container) {
+        console.error('OTE: oteStep2Container not found in oteToggleSaveContactButton');
+        return;
+    }
+    
+    var checkbox = oteStep2Container.querySelector('#otSaveContactToOdoo');
+    var nameField = oteStep2Container.querySelector('#otManualContactName');
+    var phoneField = oteStep2Container.querySelector('#otManualContactPhone');
+    var buttonContainer = oteStep2Container.querySelector('#otSaveContactButtonContainer');
+    
+    if (!checkbox || !nameField || !phoneField || !buttonContainer) {
+        console.error('OTE: Could not find all required elements for contact save button toggle');
+        return;
+    }
+    
+    var name = nameField.value.trim();
+    var phone = phoneField.value.trim();
+    
+    if (otDebugMode) {
+        console.log('OTE Toggle Contact Button - Checkbox:', checkbox.checked, 'Name:', name, 'Phone:', phone);
+    }
+    
+    // Show button only if checkbox is checked AND all manual fields have values
+    if (checkbox.checked && name && phone) {
+        if (otDebugMode) console.log('OTE: Showing contact save button');
+        buttonContainer.style.display = 'block';
+    } else {
+        if (otDebugMode) console.log('OTE: Hiding contact save button');
         buttonContainer.style.display = 'none';
     }
 }
