@@ -39,6 +39,14 @@ class Router extends RouterView
         $contact->setKey('id');
         $this->registerView($contact);
 
+        // Supplier routes
+        $suppliers = new RouterViewConfiguration('suppliers');
+        $this->registerView($suppliers);
+
+        $supplier = new RouterViewConfiguration('supplier');
+        $supplier->setKey('id');
+        $this->registerView($supplier);
+
         parent::__construct($app, $menu);
 
         $this->attachRule(new MenuRules($this));
@@ -94,6 +102,58 @@ class Router extends RouterView
      * @return  mixed   The id of this item or false
      */
     public function getContactsId($segment, $query)
+    {
+        return 1;
+    }
+
+    /**
+     * Method to get the segment(s) for a supplier
+     *
+     * @param   string  $id     ID of the supplier to retrieve the segments for
+     * @param   array   $query  The request that is built right now
+     *
+     * @return  array|string  The segments of this item
+     */
+    public function getSupplierSegment($id, $query)
+    {
+        return [(int) $id => $id];
+    }
+
+    /**
+     * Method to get the segment(s) for suppliers
+     *
+     * @param   string  $id     ID of the suppliers to retrieve the segments for
+     * @param   array   $query  The request that is built right now
+     *
+     * @return  array|string  The segments of this item
+     */
+    public function getSuppliersSegment($id, $query)
+    {
+        return [];
+    }
+
+    /**
+     * Method to get the id for a supplier
+     *
+     * @param   string  $segment  Segment to retrieve the ID for
+     * @param   array   $query    The request that is parsed right now
+     *
+     * @return  mixed   The id of this item or false
+     */
+    public function getSupplierId($segment, $query)
+    {
+        return (int) $segment;
+    }
+
+    /**
+     * Method to get the id for suppliers
+     *
+     * @param   string  $segment  Segment to retrieve the ID for
+     * @param   array   $query    The request that is parsed right now
+     *
+     * @return  mixed   The id of this item or false
+     */
+    public function getSuppliersId($segment, $query)
     {
         return 1;
     }
