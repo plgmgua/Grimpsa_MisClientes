@@ -817,14 +817,17 @@ function oteGoToNextStep() {
             name: selectedOption.dataset.supplierName
         };
         
-        if (otDebugMode) console.log('Selected supplier:', oteSelectedSupplier);
+        if (otDebugMode) console.log('OTE: Selected supplier:', oteSelectedSupplier);
         
         // Move to Step 1 (Delivery) - Reuse OT logic
         oteCurrentStep = 1;
         oteShowStep(1);
         
-        // Load child contacts and populate delivery addresses for OTE modal
-        oteLoadDeliveryAddresses(oteClientData.id);
+        // Small delay to ensure DOM is ready after cloning
+        setTimeout(function() {
+            if (otDebugMode) console.log('OTE: Loading delivery addresses after DOM update');
+            oteLoadDeliveryAddresses(oteClientData.id);
+        }, 100);
         
     } else if (oteCurrentStep === 1) {
         // Validate and move to Step 2 (Contact) - Same as OT
@@ -832,8 +835,11 @@ function oteGoToNextStep() {
             oteCurrentStep = 2;
             oteShowStep(2);
             
-            // Load contact persons for OTE modal
-            oteLoadContactPersons(oteClientData.id);
+            // Small delay to ensure DOM is ready
+            setTimeout(function() {
+                if (otDebugMode) console.log('OTE: Loading contact persons after DOM update');
+                oteLoadContactPersons(oteClientData.id);
+            }, 100);
         }
     }
 }
@@ -1067,59 +1073,79 @@ function oteShowStep(step) {
 
 // OTE Attach Step 1 Event Listeners (for cloned content)
 function oteAttachStep1Listeners() {
+    console.log('OTE: oteAttachStep1Listeners() called');
+    
     var oteStep1Container = document.getElementById('oteStep1');
     if (!oteStep1Container) {
         console.error('OTE Step 1 container not found for attaching listeners');
         return;
     }
     
+    console.log('OTE: oteStep1Container found:', oteStep1Container);
+    console.log('OTE: oteStep1Container display:', oteStep1Container.style.display);
+    
     // Find delivery type radio buttons within the cloned content
     var deliveryTypeDomicilio = oteStep1Container.querySelector('#otDeliveryTypeDomicilio');
     var deliveryTypeRecoger = oteStep1Container.querySelector('#otDeliveryTypeRecoger');
     var deliveryAddressContainer = oteStep1Container.querySelector('#otDeliveryAddressContainer');
     
-    if (otDebugMode) {
-        console.log('OTE Step 1 - Attaching listeners');
-        console.log('  deliveryTypeDomicilio:', deliveryTypeDomicilio);
-        console.log('  deliveryTypeRecoger:', deliveryTypeRecoger);
-        console.log('  deliveryAddressContainer:', deliveryAddressContainer);
-    }
+    console.log('OTE Step 1 - Element search results:');
+    console.log('  deliveryTypeDomicilio:', deliveryTypeDomicilio, 'checked:', deliveryTypeDomicilio ? deliveryTypeDomicilio.checked : 'N/A');
+    console.log('  deliveryTypeRecoger:', deliveryTypeRecoger, 'checked:', deliveryTypeRecoger ? deliveryTypeRecoger.checked : 'N/A');
+    console.log('  deliveryAddressContainer:', deliveryAddressContainer, 'display:', deliveryAddressContainer ? deliveryAddressContainer.style.display : 'N/A');
     
     if (deliveryTypeDomicilio && deliveryTypeRecoger && deliveryAddressContainer) {
         // Delivery type toggle handler - Domicilio
         deliveryTypeDomicilio.addEventListener('change', function() {
+            console.log('OTE: Domicilio radio changed, checked:', this.checked);
             if (this.checked) {
                 deliveryAddressContainer.style.display = 'block';
-                if (otDebugMode) console.log('OTE: Switched to Entrega a Domicilio');
+                console.log('OTE: Set deliveryAddressContainer to BLOCK');
             }
         });
         
         // Delivery type toggle handler - Recoger
         deliveryTypeRecoger.addEventListener('change', function() {
+            console.log('OTE: Recoger radio changed, checked:', this.checked);
             if (this.checked) {
                 deliveryAddressContainer.style.display = 'none';
-                if (otDebugMode) console.log('OTE: Switched to Recoger en Oficina');
+                console.log('OTE: Set deliveryAddressContainer to NONE');
             }
         });
         
-        // Set initial state
+        // Force initial state based on checked radio
+        console.log('OTE: Setting initial visibility state');
         if (deliveryTypeDomicilio.checked) {
             deliveryAddressContainer.style.display = 'block';
-        } else {
+            console.log('OTE: Initial state - Domicilio checked, container set to BLOCK');
+        } else if (deliveryTypeRecoger.checked) {
             deliveryAddressContainer.style.display = 'none';
+            console.log('OTE: Initial state - Recoger checked, container set to NONE');
+        } else {
+            // Default to domicilio if nothing is checked
+            deliveryTypeDomicilio.checked = true;
+            deliveryAddressContainer.style.display = 'block';
+            console.log('OTE: Initial state - Nothing checked, defaulting to Domicilio, container set to BLOCK');
         }
         
-        if (otDebugMode) console.log('OTE Step 1 - Event listeners attached');
+        console.log('OTE Step 1 - Event listeners attached successfully');
     } else {
-        console.error('OTE Step 1 - Could not find delivery type elements');
+        console.error('OTE Step 1 - Could not find all required delivery type elements');
+        console.error('  Missing:', {
+            domicilio: !deliveryTypeDomicilio,
+            recoger: !deliveryTypeRecoger,
+            container: !deliveryAddressContainer
+        });
     }
     
     // Attach listener for delivery address dropdown
     var deliverySelect = oteStep1Container.querySelector('#otDeliveryAddress');
     if (deliverySelect) {
+        console.log('OTE: Delivery select found, attaching change listener');
         deliverySelect.addEventListener('change', function() {
             var selectedOption = this.options[this.selectedIndex];
             if (selectedOption && selectedOption.value) {
+                console.log('OTE: Delivery address selected:', selectedOption.textContent);
                 // Clear manual inputs
                 var manualName = oteStep1Container.querySelector('#otManualAddressName');
                 var manualStreet = oteStep1Container.querySelector('#otManualStreet');
@@ -1130,10 +1156,10 @@ function oteAttachStep1Listeners() {
                 if (manualStreet) manualStreet.value = '';
                 if (manualCity) manualCity.value = '';
                 if (saveCheckbox) saveCheckbox.checked = false;
-                
-                if (otDebugMode) console.log('OTE: Delivery address selected:', selectedOption.textContent);
             }
         });
+    } else {
+        console.error('OTE: Delivery select not found in Step 1 container');
     }
 }
 
