@@ -823,8 +823,8 @@ function oteGoToNextStep() {
         oteCurrentStep = 1;
         oteShowStep(1);
         
-        // Initialize delivery addresses (reuse OT function)
-        populateDeliveryAddresses(oteClientData.id);
+        // Load child contacts and populate delivery addresses for OTE modal
+        oteLoadDeliveryAddresses(oteClientData.id);
         
     } else if (oteCurrentStep === 1) {
         // Validate and move to Step 2 (Contact) - Same as OT
@@ -832,10 +832,162 @@ function oteGoToNextStep() {
             oteCurrentStep = 2;
             oteShowStep(2);
             
-            // Initialize contact persons (reuse OT function)
-            populateContactPersons(oteClientData.id);
+            // Load contact persons for OTE modal
+            oteLoadContactPersons(oteClientData.id);
         }
     }
+}
+
+// OTE Load Delivery Addresses (scoped to OTE modal)
+function oteLoadDeliveryAddresses(clientId) {
+    if (otDebugMode) console.log('OTE: Loading delivery addresses for client:', clientId);
+    
+    // Find the select element within the OTE Step 1 container
+    var oteStep1Container = document.getElementById('oteStep1');
+    if (!oteStep1Container) {
+        console.error('OTE Step 1 container not found');
+        return;
+    }
+    
+    var select = oteStep1Container.querySelector('#otDeliveryAddress');
+    if (!select) {
+        console.error('Delivery address select not found in OTE Step 1');
+        return;
+    }
+    
+    select.innerHTML = '<option value="">Cargando direcciones...</option>';
+    
+    // Fetch child contacts for this client
+    fetch('index.php?option=com_odoocontacts&task=contact.getChildContacts&id=' + clientId + '&<?php echo Session::getFormToken(); ?>=1')
+        .then(response => response.json())
+        .then(data => {
+            if (otDebugMode) console.log('OTE: Child contacts received:', data);
+            
+            select.innerHTML = '<option value="">Seleccione una dirección...</option>';
+            
+            if (!data.success || !data.contacts || data.contacts.length === 0) {
+                select.innerHTML = '<option value="">No hay direcciones disponibles - use campos manuales abajo</option>';
+                return;
+            }
+            
+            // Filter delivery addresses
+            var deliveryAddresses = data.contacts.filter(c => c.type === 'delivery');
+            var otherAddresses = data.contacts.filter(c => c.type !== 'delivery');
+            
+            // Add delivery addresses
+            if (deliveryAddresses.length > 0) {
+                var deliveryGroup = document.createElement('optgroup');
+                deliveryGroup.label = 'Direcciones de Entrega';
+                deliveryAddresses.forEach(function(contact) {
+                    var option = document.createElement('option');
+                    option.value = contact.id;
+                    option.textContent = contact.name + ' - ' + (contact.street || 'Sin dirección');
+                    option.dataset.street = contact.street || '';
+                    option.dataset.city = contact.city || '';
+                    deliveryGroup.appendChild(option);
+                });
+                select.appendChild(deliveryGroup);
+            }
+            
+            // Add other addresses if no delivery addresses exist
+            if (deliveryAddresses.length === 0 && otherAddresses.length > 0) {
+                var otherGroup = document.createElement('optgroup');
+                otherGroup.label = 'Otras Direcciones';
+                otherAddresses.forEach(function(contact) {
+                    var option = document.createElement('option');
+                    option.value = contact.id;
+                    option.textContent = contact.name + ' - ' + (contact.street || 'Sin dirección');
+                    option.dataset.street = contact.street || '';
+                    option.dataset.city = contact.city || '';
+                    otherGroup.appendChild(option);
+                });
+                select.appendChild(otherGroup);
+            }
+            
+            if (deliveryAddresses.length === 0 && otherAddresses.length === 0) {
+                select.innerHTML = '<option value="">No hay direcciones disponibles - use campos manuales abajo</option>';
+            }
+            
+            if (otDebugMode) console.log('OTE: Delivery addresses populated');
+        })
+        .catch(error => {
+            console.error('Error loading child contacts:', error);
+            select.innerHTML = '<option value="">Error al cargar direcciones</option>';
+        });
+}
+
+// OTE Load Contact Persons (scoped to OTE modal)
+function oteLoadContactPersons(clientId) {
+    if (otDebugMode) console.log('OTE: Loading contact persons for client:', clientId);
+    
+    // Find the select element within the OTE Step 2 container
+    var oteStep2Container = document.getElementById('oteStep2');
+    if (!oteStep2Container) {
+        console.error('OTE Step 2 container not found');
+        return;
+    }
+    
+    var select = oteStep2Container.querySelector('#otContactPerson');
+    if (!select) {
+        console.error('Contact person select not found in OTE Step 2');
+        return;
+    }
+    
+    select.innerHTML = '<option value="">Cargando contactos...</option>';
+    
+    // Fetch child contacts and parent contact
+    Promise.all([
+        fetch('index.php?option=com_odoocontacts&task=contact.getChildContacts&id=' + clientId + '&<?php echo Session::getFormToken(); ?>=1'),
+        fetch('index.php?option=com_odoocontacts&task=contact.getParentContact&id=' + clientId + '&<?php echo Session::getFormToken(); ?>=1')
+    ])
+    .then(responses => Promise.all(responses.map(r => r.json())))
+    .then(([childData, parentData]) => {
+        if (otDebugMode) {
+            console.log('OTE: Child contacts received:', childData);
+            console.log('OTE: Parent contact received:', parentData);
+        }
+        
+        select.innerHTML = '<option value="">Seleccione un contacto...</option>';
+        
+        var hasContacts = false;
+        
+        // Add parent contact first
+        if (parentData.success && parentData.contact) {
+            var parentOption = document.createElement('option');
+            parentOption.value = 'parent_' + parentData.contact.id;
+            parentOption.textContent = 'Contacto Principal - ' + parentData.contact.name;
+            parentOption.dataset.contactName = parentData.contact.name;
+            parentOption.dataset.contactPhone = parentData.contact.phone || parentData.contact.mobile || '';
+            select.appendChild(parentOption);
+            hasContacts = true;
+        }
+        
+        // Add contact-type child contacts
+        if (childData.success && childData.contacts) {
+            var contactPersons = childData.contacts.filter(c => c.type === 'contact');
+            if (contactPersons.length > 0) {
+                contactPersons.forEach(function(contact) {
+                    var option = document.createElement('option');
+                    option.value = contact.id;
+                    option.textContent = contact.name + (contact.phone ? ' - ' + contact.phone : '');
+                    option.dataset.contactName = contact.name;
+                    option.dataset.contactPhone = contact.phone || contact.mobile || '';
+                    select.appendChild(option);
+                });
+                hasContacts = true;
+            }
+        }
+        
+        if (!hasContacts) {
+            select.innerHTML = '<option value="">No hay contactos disponibles - use campos manuales abajo</option>';
+        }
+        
+        if (otDebugMode) console.log('OTE: Contact persons populated');
+    })
+    .catch(error => {
+        console.error('Error loading contacts:', error);
+        select.innerHTML = '<option value="">Error al cargar contactos</option>';
+    });
 }
 
 // OTE Go Back
