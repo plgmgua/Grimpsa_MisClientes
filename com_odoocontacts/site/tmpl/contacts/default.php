@@ -1030,6 +1030,9 @@ function oteShowStep(step) {
             console.log('OTE Step 1 - Populated client info:', oteClientData.name, oteClientData.vat);
         }
         
+        // Re-attach event listeners for delivery type toggle (cloning doesn't copy listeners)
+        oteAttachStep1Listeners();
+        
         document.getElementById('oteStep1').style.display = 'block';
     } else if (step === 2) {
         // Copy OT Step 2 content
@@ -1053,10 +1056,118 @@ function oteShowStep(step) {
             console.log('OTE Step 2 - Populated client info:', oteClientData.name, oteClientData.vat);
         }
         
+        // Re-attach event listeners for contact person fields
+        oteAttachStep2Listeners();
+        
         document.getElementById('oteStep2').style.display = 'block';
     }
     
     oteUpdateProgress();
+}
+
+// OTE Attach Step 1 Event Listeners (for cloned content)
+function oteAttachStep1Listeners() {
+    var oteStep1Container = document.getElementById('oteStep1');
+    if (!oteStep1Container) {
+        console.error('OTE Step 1 container not found for attaching listeners');
+        return;
+    }
+    
+    // Find delivery type radio buttons within the cloned content
+    var deliveryTypeDomicilio = oteStep1Container.querySelector('#otDeliveryTypeDomicilio');
+    var deliveryTypeRecoger = oteStep1Container.querySelector('#otDeliveryTypeRecoger');
+    var deliveryAddressContainer = oteStep1Container.querySelector('#otDeliveryAddressContainer');
+    
+    if (otDebugMode) {
+        console.log('OTE Step 1 - Attaching listeners');
+        console.log('  deliveryTypeDomicilio:', deliveryTypeDomicilio);
+        console.log('  deliveryTypeRecoger:', deliveryTypeRecoger);
+        console.log('  deliveryAddressContainer:', deliveryAddressContainer);
+    }
+    
+    if (deliveryTypeDomicilio && deliveryTypeRecoger && deliveryAddressContainer) {
+        // Delivery type toggle handler - Domicilio
+        deliveryTypeDomicilio.addEventListener('change', function() {
+            if (this.checked) {
+                deliveryAddressContainer.style.display = 'block';
+                if (otDebugMode) console.log('OTE: Switched to Entrega a Domicilio');
+            }
+        });
+        
+        // Delivery type toggle handler - Recoger
+        deliveryTypeRecoger.addEventListener('change', function() {
+            if (this.checked) {
+                deliveryAddressContainer.style.display = 'none';
+                if (otDebugMode) console.log('OTE: Switched to Recoger en Oficina');
+            }
+        });
+        
+        // Set initial state
+        if (deliveryTypeDomicilio.checked) {
+            deliveryAddressContainer.style.display = 'block';
+        } else {
+            deliveryAddressContainer.style.display = 'none';
+        }
+        
+        if (otDebugMode) console.log('OTE Step 1 - Event listeners attached');
+    } else {
+        console.error('OTE Step 1 - Could not find delivery type elements');
+    }
+    
+    // Attach listener for delivery address dropdown
+    var deliverySelect = oteStep1Container.querySelector('#otDeliveryAddress');
+    if (deliverySelect) {
+        deliverySelect.addEventListener('change', function() {
+            var selectedOption = this.options[this.selectedIndex];
+            if (selectedOption && selectedOption.value) {
+                // Clear manual inputs
+                var manualName = oteStep1Container.querySelector('#otManualAddressName');
+                var manualStreet = oteStep1Container.querySelector('#otManualStreet');
+                var manualCity = oteStep1Container.querySelector('#otManualCity');
+                var saveCheckbox = oteStep1Container.querySelector('#otSaveAddressToOdoo');
+                
+                if (manualName) manualName.value = '';
+                if (manualStreet) manualStreet.value = '';
+                if (manualCity) manualCity.value = '';
+                if (saveCheckbox) saveCheckbox.checked = false;
+                
+                if (otDebugMode) console.log('OTE: Delivery address selected:', selectedOption.textContent);
+            }
+        });
+    }
+}
+
+// OTE Attach Step 2 Event Listeners (for cloned content)
+function oteAttachStep2Listeners() {
+    var oteStep2Container = document.getElementById('oteStep2');
+    if (!oteStep2Container) {
+        console.error('OTE Step 2 container not found for attaching listeners');
+        return;
+    }
+    
+    if (otDebugMode) console.log('OTE Step 2 - Attaching listeners');
+    
+    // Attach listener for contact person dropdown
+    var contactSelect = oteStep2Container.querySelector('#otContactPerson');
+    if (contactSelect) {
+        contactSelect.addEventListener('change', function() {
+            var selectedOption = this.options[this.selectedIndex];
+            if (selectedOption && selectedOption.value) {
+                // Clear manual inputs
+                var manualName = oteStep2Container.querySelector('#otManualContactName');
+                var manualPhone = oteStep2Container.querySelector('#otManualContactPhone');
+                var saveCheckbox = oteStep2Container.querySelector('#otSaveContactToOdoo');
+                
+                if (manualName) manualName.value = '';
+                if (manualPhone) manualPhone.value = '';
+                if (saveCheckbox) saveCheckbox.checked = false;
+                
+                if (otDebugMode) console.log('OTE: Contact person selected:', selectedOption.textContent);
+            }
+        });
+    }
+    
+    if (otDebugMode) console.log('OTE Step 2 - Event listeners attached');
 }
 
 // OTE Update Progress
