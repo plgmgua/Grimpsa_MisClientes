@@ -210,17 +210,18 @@ function safeGet($array, $key, $default = '') {
                             </td>
                             <td class="text-center">
                                 <div class="btn-group btn-group-sm" role="group">
-                                    <a href="<?php echo Route::_('index.php?option=com_odoocontacts&view=contact&layout=edit&id=' . (int)safeGet($item, 'id', 0)); ?>" 
-                                       class="btn btn-outline-primary" 
-                                       title="Editar Cliente">
-                                        <i class="fas fa-edit"></i>
-                                    </a>
-                                    
                                     <button type="button" 
                                             class="btn btn-outline-warning" 
                                             onclick="openCotizacionWindow(<?php echo (int)safeGet($item, 'id', 0); ?>, '<?php echo addslashes(safeGet($item, 'name', 'Sin nombre')); ?>', '<?php echo addslashes(safeGet($item, 'vat', '')); ?>')" 
                                             title="Cotización">
                                         <strong>Q.</strong>
+                                    </button>
+                                    
+                                    <button type="button" 
+                                            class="btn btn-outline-success" 
+                                            onclick="openOTModal(<?php echo (int)safeGet($item, 'id', 0); ?>, '<?php echo addslashes(safeGet($item, 'name', 'Sin nombre')); ?>', '<?php echo addslashes(safeGet($item, 'vat', '')); ?>')" 
+                                            title="Orden de Trabajo">
+                                        <i class="fas fa-truck"></i> OT
                                     </button>
                                     
                                     <button type="button" 
@@ -230,12 +231,11 @@ function safeGet($array, $key, $default = '') {
                                         <strong>OTE</strong>
                                     </button>
                                     
-                                    <button type="button" 
-                                            class="btn btn-outline-success" 
-                                            onclick="openOTModal(<?php echo (int)safeGet($item, 'id', 0); ?>, '<?php echo addslashes(safeGet($item, 'name', 'Sin nombre')); ?>', '<?php echo addslashes(safeGet($item, 'vat', '')); ?>')" 
-                                            title="Orden de Trabajo">
-                                        <i class="fas fa-truck"></i> OT
-                                    </button>
+                                    <a href="<?php echo Route::_('index.php?option=com_odoocontacts&view=contact&layout=edit&id=' . (int)safeGet($item, 'id', 0)); ?>" 
+                                       class="btn btn-outline-primary" 
+                                       title="Editar Cliente">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
                                 </div>
                             </td>
                         </tr>
