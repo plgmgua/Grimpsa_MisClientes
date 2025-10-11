@@ -829,4 +829,350 @@ class OdooHelper
 
         return $result['params']['param']['value']['int'];
     }
+
+    /**
+     * Get suppliers by reference containing "OTE"
+     * Accessible by all users (no agent filter)
+     *
+     * @return  array  Array of suppliers
+     */
+    public function getSuppliersByOTEReference()
+    {
+        $xmlPayload = '<?xml version="1.0"?>
+<methodCall>
+   <methodName>execute_kw</methodName>
+   <params>
+      <param>
+         <value><string>grupoimpre</string></value>
+      </param>
+      <param>
+         <value><int>2</int></value>
+      </param>
+      <param>
+         <value><string>2386bb5ae66c7fd9022feaf82148680c4cf4ce3b</string></value>
+      </param>
+      <param>
+         <value><string>res.partner</string></value>
+      </param>
+      <param>
+         <value><string>search_read</string></value>
+      </param>
+      <param>
+         <value>
+            <array>
+               <data>
+                  <value>
+                     <array>
+                        <data>
+                           <value>
+                              <array>
+                                 <data>
+                                    <value><string>supplier_rank</string></value>
+                                    <value><string>&gt;</string></value>
+                                    <value><int>0</int></value>
+                                 </data>
+                              </array>
+                           </value>
+                           <value>
+                              <array>
+                                 <data>
+                                    <value><string>ref</string></value>
+                                    <value><string>ilike</string></value>
+                                    <value><string>%OTE%</string></value>
+                                 </data>
+                              </array>
+                           </value>
+                        </data>
+                     </array>
+                  </value>
+               </data>
+            </array>
+         </value>
+      </param>
+      <param>
+         <value>
+            <struct>
+               <member>
+                  <name>fields</name>
+                  <value>
+                     <array>
+                        <data>
+                           <value><string>id</string></value>
+                           <value><string>name</string></value>
+                           <value><string>ref</string></value>
+                           <value><string>email</string></value>
+                           <value><string>phone</string></value>
+                           <value><string>mobile</string></value>
+                           <value><string>vat</string></value>
+                           <value><string>property_payment_term_id</string></value>
+                           <value><string>supplier_rank</string></value>
+                        </data>
+                     </array>
+                  </value>
+               </member>
+            </struct>
+         </value>
+      </param>
+   </params>
+</methodCall>';
+
+        $result = $this->executeOdooCall($xmlPayload);
+        
+        if (!$result) {
+            return [];
+        }
+
+        return $this->parseSuppliersResponse($result);
+    }
+
+    /**
+     * Get all suppliers (no OTE filter)
+     * For CRUD management interface
+     *
+     * @return  array  Array of suppliers
+     */
+    public function getAllSuppliers()
+    {
+        $xmlPayload = '<?xml version="1.0"?>
+<methodCall>
+   <methodName>execute_kw</methodName>
+   <params>
+      <param>
+         <value><string>grupoimpre</string></value>
+      </param>
+      <param>
+         <value><int>2</int></value>
+      </param>
+      <param>
+         <value><string>2386bb5ae66c7fd9022feaf82148680c4cf4ce3b</string></value>
+      </param>
+      <param>
+         <value><string>res.partner</string></value>
+      </param>
+      <param>
+         <value><string>search_read</string></value>
+      </param>
+      <param>
+         <value>
+            <array>
+               <data>
+                  <value>
+                     <array>
+                        <data>
+                           <value>
+                              <array>
+                                 <data>
+                                    <value><string>supplier_rank</string></value>
+                                    <value><string>&gt;</string></value>
+                                    <value><int>0</int></value>
+                                 </data>
+                              </array>
+                           </value>
+                        </data>
+                     </array>
+                  </value>
+               </data>
+            </array>
+         </value>
+      </param>
+      <param>
+         <value>
+            <struct>
+               <member>
+                  <name>fields</name>
+                  <value>
+                     <array>
+                        <data>
+                           <value><string>id</string></value>
+                           <value><string>name</string></value>
+                           <value><string>ref</string></value>
+                           <value><string>email</string></value>
+                           <value><string>phone</string></value>
+                           <value><string>mobile</string></value>
+                           <value><string>vat</string></value>
+                           <value><string>street</string></value>
+                           <value><string>city</string></value>
+                           <value><string>property_payment_term_id</string></value>
+                           <value><string>supplier_rank</string></value>
+                        </data>
+                     </array>
+                  </value>
+               </member>
+            </struct>
+         </value>
+      </param>
+   </params>
+</methodCall>';
+
+        $result = $this->executeOdooCall($xmlPayload);
+        
+        if (!$result) {
+            return [];
+        }
+
+        return $this->parseSuppliersResponse($result);
+    }
+
+    /**
+     * Get supplier by ID
+     *
+     * @param   integer  $supplierId  The supplier ID
+     *
+     * @return  mixed  Supplier data or null
+     */
+    public function getSupplierById($supplierId)
+    {
+        $xmlPayload = '<?xml version="1.0"?>
+<methodCall>
+   <methodName>execute_kw</methodName>
+   <params>
+      <param>
+         <value><string>grupoimpre</string></value>
+      </param>
+      <param>
+         <value><int>2</int></value>
+      </param>
+      <param>
+         <value><string>2386bb5ae66c7fd9022feaf82148680c4cf4ce3b</string></value>
+      </param>
+      <param>
+         <value><string>res.partner</string></value>
+      </param>
+      <param>
+         <value><string>search_read</string></value>
+      </param>
+      <param>
+        <value>
+        <array>
+          <data>
+            <value>
+              <array>
+                <data>
+                  <value>
+                    <array>
+                      <data>
+                        <value><string>id</string></value>
+                        <value><string>=</string></value>
+                        <value><int>' . (int)$supplierId . '</int></value>
+                      </data>
+                    </array>
+                  </value>
+                </data>
+              </array>
+            </value>
+          </data>
+        </array>
+      </value>
+    </param>
+    <param>
+         <value>
+            <struct>
+               <member>
+                  <name>fields</name>
+                  <value>
+                     <array>
+                        <data>
+                           <value><string>id</string></value>
+                           <value><string>name</string></value>
+                           <value><string>ref</string></value>
+                           <value><string>email</string></value>
+                           <value><string>phone</string></value>
+                           <value><string>mobile</string></value>
+                           <value><string>vat</string></value>
+                           <value><string>street</string></value>
+                           <value><string>city</string></value>
+                           <value><string>property_payment_term_id</string></value>
+                           <value><string>supplier_rank</string></value>
+                        </data>
+                     </array>
+                  </value>
+               </member>
+            </struct>
+         </value>
+      </param>
+   </params>
+</methodCall>';
+
+        $result = $this->executeOdooCall($xmlPayload);
+        
+        if (!$result) {
+            return null;
+        }
+
+        $suppliers = $this->parseSuppliersResponse($result);
+        return !empty($suppliers) ? $suppliers[0] : null;
+    }
+
+    /**
+     * Parse suppliers response from Odoo
+     *
+     * @param   mixed  $result  The API response
+     *
+     * @return  array  Array of suppliers
+     */
+    private function parseSuppliersResponse($result)
+    {
+        if (!$result || !isset($result['params']['param']['value']['array']['data']['value'])) {
+            return [];
+        }
+
+        $suppliers = [];
+        $values = $result['params']['param']['value']['array']['data']['value'];
+        
+        // Handle both single and multiple results
+        if (isset($values['struct'])) {
+            $values = [$values];
+        }
+
+        foreach ($values as $value) {
+            if (!isset($value['struct']['member'])) {
+                continue;
+            }
+
+            $supplier = [];
+            foreach ($value['struct']['member'] as $member) {
+                $fieldName = $member['name'];
+                $fieldValue = '';
+
+                if (isset($member['value']['string'])) {
+                    $fieldValue = $member['value']['string'];
+                } elseif (isset($member['value']['int'])) {
+                    $fieldValue = (string)$member['value']['int'];
+                } elseif (isset($member['value']['boolean'])) {
+                    $fieldValue = $member['value']['boolean'] ? '1' : '0';
+                } elseif (isset($member['value']['double'])) {
+                    $fieldValue = (string)$member['value']['double'];
+                } elseif (isset($member['value']['array']['data']['value'])) {
+                    // Handle array fields like property_payment_term_id [id, name]
+                    if ($fieldName === 'property_payment_term_id') {
+                        $paymentTermData = $member['value']['array']['data']['value'];
+                        if (isset($paymentTermData[1]['string'])) {
+                            $fieldValue = $paymentTermData[1]['string']; // Get the name
+                        }
+                    }
+                }
+
+                $supplier[$fieldName] = $fieldValue;
+            }
+
+            // Normalize supplier data
+            $normalizedSupplier = [
+                'id' => isset($supplier['id']) ? $supplier['id'] : '0',
+                'name' => isset($supplier['name']) ? $supplier['name'] : '',
+                'ref' => isset($supplier['ref']) ? $supplier['ref'] : '',
+                'email' => isset($supplier['email']) ? $supplier['email'] : '',
+                'phone' => isset($supplier['phone']) ? $supplier['phone'] : '',
+                'mobile' => isset($supplier['mobile']) ? $supplier['mobile'] : '',
+                'vat' => isset($supplier['vat']) ? $supplier['vat'] : '',
+                'street' => isset($supplier['street']) ? $supplier['street'] : '',
+                'city' => isset($supplier['city']) ? $supplier['city'] : '',
+                'payment_terms' => isset($supplier['property_payment_term_id']) ? $supplier['property_payment_term_id'] : '',
+                'supplier_rank' => isset($supplier['supplier_rank']) ? $supplier['supplier_rank'] : '0'
+            ];
+
+            $suppliers[] = $normalizedSupplier;
+        }
+
+        return $suppliers;
+    }
 }
