@@ -885,20 +885,25 @@ function oteLoadDeliveryAddresses(clientId) {
         .then(data => {
             console.log('OTE: Child contacts data received:', data);
             console.log('OTE: data.success:', data.success);
+            console.log('OTE: data.data:', data.data);
             console.log('OTE: data.contacts:', data.contacts);
-            console.log('OTE: data.contacts.length:', data.contacts ? data.contacts.length : 'N/A');
+            
+            // BUGFIX: Server returns data.data, not data.contacts!
+            var contacts = data.data || data.contacts || [];
+            console.log('OTE: Using contacts array:', contacts);
+            console.log('OTE: contacts.length:', contacts.length);
             
             select.innerHTML = '<option value="">Seleccione una dirección...</option>';
             
-            if (!data.success || !data.contacts || data.contacts.length === 0) {
+            if (!data.success || !contacts || contacts.length === 0) {
                 console.log('OTE: No addresses found, showing manual input message');
                 select.innerHTML = '<option value="">No hay direcciones disponibles - use campos manuales abajo</option>';
                 return;
             }
             
             // Filter delivery addresses
-            var deliveryAddresses = data.contacts.filter(c => c.type === 'delivery');
-            var otherAddresses = data.contacts.filter(c => c.type !== 'delivery');
+            var deliveryAddresses = contacts.filter(c => c.type === 'delivery');
+            var otherAddresses = contacts.filter(c => c.type !== 'delivery');
             
             // Add delivery addresses
             if (deliveryAddresses.length > 0) {
@@ -989,8 +994,10 @@ function oteLoadContactPersons(clientId) {
         }
         
         // Add contact-type child contacts
-        if (childData.success && childData.contacts) {
-            var contactPersons = childData.contacts.filter(c => c.type === 'contact');
+        // BUGFIX: Server returns data.data, not data.contacts!
+        var childContacts = childData.data || childData.contacts || [];
+        if (childData.success && childContacts.length > 0) {
+            var contactPersons = childContacts.filter(c => c.type === 'contact');
             if (contactPersons.length > 0) {
                 contactPersons.forEach(function(contact) {
                     var option = document.createElement('option');
