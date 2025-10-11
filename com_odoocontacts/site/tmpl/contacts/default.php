@@ -957,9 +957,12 @@ function oteLoadDeliveryAddresses(clientId) {
                 return;
             }
             
-            // Filter delivery addresses
+            // Filter addresses by type (exclude 'contact' type as those are for contact persons)
             var deliveryAddresses = contacts.filter(c => c.type === 'delivery');
-            var otherAddresses = contacts.filter(c => c.type !== 'delivery');
+            var invoiceAddresses = contacts.filter(c => c.type === 'invoice');
+            var otherAddresses = contacts.filter(c => c.type !== 'delivery' && c.type !== 'invoice' && c.type !== 'contact');
+            
+            var hasAnyAddresses = false;
             
             // Add delivery addresses
             if (deliveryAddresses.length > 0) {
@@ -974,24 +977,43 @@ function oteLoadDeliveryAddresses(clientId) {
                     deliveryGroup.appendChild(option);
                 });
                 select.appendChild(deliveryGroup);
+                hasAnyAddresses = true;
             }
             
-            // Add other addresses if no delivery addresses exist
-            if (deliveryAddresses.length === 0 && otherAddresses.length > 0) {
-                var otherGroup = document.createElement('optgroup');
-                otherGroup.label = 'Otras Direcciones';
-                otherAddresses.forEach(function(contact) {
+            // Add invoice addresses
+            if (invoiceAddresses.length > 0) {
+                var invoiceGroup = document.createElement('optgroup');
+                invoiceGroup.label = 'Direcciones de Facturación';
+                invoiceAddresses.forEach(function(contact) {
                     var option = document.createElement('option');
                     option.value = contact.id;
                     option.textContent = contact.name + ' - ' + (contact.street || 'Sin dirección');
                     option.dataset.street = contact.street || '';
                     option.dataset.city = contact.city || '';
+                    invoiceGroup.appendChild(option);
+                });
+                select.appendChild(invoiceGroup);
+                hasAnyAddresses = true;
+            }
+            
+            // Add other addresses (use contact name as the type label)
+            if (otherAddresses.length > 0) {
+                var otherGroup = document.createElement('optgroup');
+                otherGroup.label = 'Otras Direcciones';
+                otherAddresses.forEach(function(contact) {
+                    var option = document.createElement('option');
+                    option.value = contact.id;
+                    // Use the contact name as the primary identifier since it describes the address type
+                    option.textContent = contact.name + (contact.street ? ' - ' + contact.street : '');
+                    option.dataset.street = contact.street || '';
+                    option.dataset.city = contact.city || '';
                     otherGroup.appendChild(option);
                 });
                 select.appendChild(otherGroup);
+                hasAnyAddresses = true;
             }
             
-            if (deliveryAddresses.length === 0 && otherAddresses.length === 0) {
+            if (!hasAnyAddresses) {
                 select.innerHTML = '<option value="">No hay direcciones disponibles - use campos manuales abajo</option>';
             }
             
@@ -1705,9 +1727,12 @@ function populateDeliveryAddresses(parentContact) {
         return;
     }
     
-    // Sort: delivery addresses first, then others
+    // Filter addresses by type (exclude 'contact' type as those are for contact persons)
     var deliveryAddresses = otChildContacts.filter(c => c.type === 'delivery');
-    var otherAddresses = otChildContacts.filter(c => c.type !== 'delivery');
+    var invoiceAddresses = otChildContacts.filter(c => c.type === 'invoice');
+    var otherAddresses = otChildContacts.filter(c => c.type !== 'delivery' && c.type !== 'invoice' && c.type !== 'contact');
+    
+    var hasAnyAddresses = false;
     
     // Add delivery addresses
     if (deliveryAddresses.length > 0) {
@@ -1722,21 +1747,44 @@ function populateDeliveryAddresses(parentContact) {
             deliveryGroup.appendChild(option);
         });
         select.appendChild(deliveryGroup);
+        hasAnyAddresses = true;
     }
     
-    // Add other addresses if no delivery addresses exist
-    if (deliveryAddresses.length === 0 && otherAddresses.length > 0) {
-        var otherGroup = document.createElement('optgroup');
-        otherGroup.label = 'Otras Direcciones';
-        otherAddresses.forEach(function(contact) {
+    // Add invoice addresses
+    if (invoiceAddresses.length > 0) {
+        var invoiceGroup = document.createElement('optgroup');
+        invoiceGroup.label = 'Direcciones de Facturación';
+        invoiceAddresses.forEach(function(contact) {
             var option = document.createElement('option');
             option.value = contact.id;
             option.textContent = contact.name + ' - ' + (contact.street || 'Sin dirección');
             option.dataset.street = contact.street || '';
             option.dataset.city = contact.city || '';
+            invoiceGroup.appendChild(option);
+        });
+        select.appendChild(invoiceGroup);
+        hasAnyAddresses = true;
+    }
+    
+    // Add other addresses (use contact name as the type label)
+    if (otherAddresses.length > 0) {
+        var otherGroup = document.createElement('optgroup');
+        otherGroup.label = 'Otras Direcciones';
+        otherAddresses.forEach(function(contact) {
+            var option = document.createElement('option');
+            option.value = contact.id;
+            // Use the contact name as the primary identifier since it describes the address type
+            option.textContent = contact.name + (contact.street ? ' - ' + contact.street : '');
+            option.dataset.street = contact.street || '';
+            option.dataset.city = contact.city || '';
             otherGroup.appendChild(option);
         });
         select.appendChild(otherGroup);
+        hasAnyAddresses = true;
+    }
+    
+    if (!hasAnyAddresses) {
+        select.innerHTML = '<option value="">No hay direcciones disponibles - use campos manuales abajo</option>';
     }
     
     // Handle address selection - clear manual inputs when dropdown is used
