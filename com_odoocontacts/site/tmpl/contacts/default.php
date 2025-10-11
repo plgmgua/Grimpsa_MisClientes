@@ -1098,30 +1098,42 @@ function oteShowStep(step) {
         console.log('OTE: oteStep1 set to display block');
     } else if (step === 2) {
         // Copy OT Step 2 content
+        console.log('OTE: Cloning OT Step 2 content');
         var otStep2Content = document.getElementById('otStep2').cloneNode(true);
         otStep2Content.id = 'oteStep2Content';
+        
+        // CRITICAL FIX: Remove display:none from cloned content
+        otStep2Content.style.display = 'block';
+        console.log('OTE: Set cloned content to display block');
+        
         document.getElementById('oteStep2').innerHTML = '';
         document.getElementById('oteStep2').appendChild(otStep2Content);
         
+        console.log('OTE: OT Step 2 cloned successfully and appended');
+        
         // Populate client information in the cloned content (if it exists in step 2)
-        var clientNameEl2 = document.getElementById('oteStep2').querySelector('#otClientName');
-        var clientVatEl2 = document.getElementById('oteStep2').querySelector('#otClientVat');
+        var oteStep2Container = document.getElementById('oteStep2');
+        var clientNameEl2 = oteStep2Container.querySelector('#otClientName');
+        var clientVatEl2 = oteStep2Container.querySelector('#otClientVat');
         
         if (clientNameEl2) {
             clientNameEl2.textContent = oteClientData.name;
+            console.log('OTE Step 2 - Set client name:', oteClientData.name);
         }
         if (clientVatEl2) {
             clientVatEl2.textContent = oteClientData.vat || 'N/A';
+            console.log('OTE Step 2 - Set client VAT:', oteClientData.vat);
         }
         
-        if (otDebugMode) {
-            console.log('OTE Step 2 - Populated client info:', oteClientData.name, oteClientData.vat);
-        }
+        console.log('OTE Step 2 - Populated client info:', oteClientData.name, oteClientData.vat);
         
         // Re-attach event listeners for contact person fields
+        console.log('OTE: About to attach Step 2 listeners');
         oteAttachStep2Listeners();
+        console.log('OTE: Step 2 listeners attached');
         
         document.getElementById('oteStep2').style.display = 'block';
+        console.log('OTE: oteStep2 container set to display block');
     }
     
     oteUpdateProgress();
