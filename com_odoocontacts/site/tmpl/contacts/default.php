@@ -1043,10 +1043,12 @@ function oteLoadContactPersons(clientId) {
             var parentOption = document.createElement('option');
             parentOption.value = 'parent_' + parentData.contact.id;
             parentOption.textContent = 'Contacto Principal - ' + parentData.contact.name;
+            // Use consistent dataset attribute names (name/phone, not contactName/contactPhone)
             parentOption.dataset.contactName = parentData.contact.name;
             parentOption.dataset.contactPhone = parentData.contact.phone || parentData.contact.mobile || '';
             select.appendChild(parentOption);
             hasContacts = true;
+            console.log('OTE: Added parent contact to dropdown:', parentData.contact.name);
         }
         
         // Add contact-type child contacts

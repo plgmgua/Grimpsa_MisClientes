@@ -325,6 +325,10 @@ class OdooHelper
                         $fieldValue = '';
                     }
                 } elseif (isset($member['value']['boolean'])) {
+                    // Special handling for parent_id: if it's false, don't set hasParentId
+                    if ($fieldName === 'parent_id' && $member['value']['boolean'] === true) {
+                        $hasParentId = true;
+                    }
                     $fieldValue = $member['value']['boolean'] ? '1' : '0';
                 } elseif (isset($member['value']['double'])) {
                     $fieldValue = (string)$member['value']['double'];
