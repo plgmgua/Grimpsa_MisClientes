@@ -309,9 +309,18 @@ if (!$isNew && !$isChildContact && isset($this->item->id) && (int)$this->item->i
                                                                 $typeLabel = 'Entrega';
                                                                 $badgeClass = 'bg-success';
                                                                 break;
-                                                            default:
+                                                            case 'other':
+                                                                $typeLabel = 'Otras';
+                                                                $badgeClass = 'bg-warning';
+                                                                break;
+                                                            case 'contact':
                                                                 $typeLabel = 'Contacto';
                                                                 $badgeClass = 'bg-info';
+                                                                break;
+                                                            default:
+                                                                // For any other custom type, show "Otras"
+                                                                $typeLabel = 'Otras';
+                                                                $badgeClass = 'bg-warning';
                                                         }
                                                         ?>
                                                         <span class="badge <?php echo $badgeClass; ?>"><?php echo $typeLabel; ?></span>
