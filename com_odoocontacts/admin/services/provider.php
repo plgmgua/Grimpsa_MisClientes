@@ -19,6 +19,13 @@ use Joomla\CMS\HTML\Registry;
 use Joomla\CMS\MVC\Factory\MVCFactoryInterface;
 use Joomla\DI\Container;
 use Joomla\DI\ServiceProviderInterface;
+
+// Explicitly require the component class to ensure it's loaded
+$componentClassFile = __DIR__ . '/../src/Extension/OdooContactsComponent.php';
+if (file_exists($componentClassFile)) {
+    require_once $componentClassFile;
+}
+
 use Grimpsa\Component\OdooContacts\Administrator\Extension\OdooContactsComponent;
 
 /**
