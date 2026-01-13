@@ -150,20 +150,36 @@ verify_downloaded_files() {
     log "Repository path: $repo_path"
     log "Component source path: $component_source"
     
-    # Debug: List what's actually in the repo
-    if [ -d "$repo_path" ]; then
-        log "Contents of repository root:"
-        ls -la "$repo_path" | head -20 | while read line; do
-            log "  $line"
-        done
+    # Debug: Check if paths exist
+    if [ ! -d "$repo_path" ]; then
+        error "Repository path does not exist: $repo_path"
+        exit 1
     fi
+    
+    log "Repository path exists: ✓"
+    
+    # Debug: List what's actually in the repo
+    log "Contents of repository root:"
+    ls -la "$repo_path" 2>&1 | head -20 | while read line; do
+        log "  $line"
+    done
     
     # Check if essential directories exist in the downloaded repository
     local missing_files=()
     
+    # Use absolute path and verify it exists
     if [ ! -d "$component_source" ]; then
         missing_files+=("$COMPONENT_NAME/")
-        log "Component directory not found at: $component_source"
+        error "Component directory not found at: $component_source"
+        error "Absolute path check: $(readlink -f "$component_source" 2>/dev/null || echo 'path resolution failed')"
+        
+        # Try to find where it actually is
+        log "Searching for component directory..."
+        find "$repo_path" -maxdepth 2 -type d -name "$COMPONENT_NAME" 2>/dev/null | while read found_path; do
+            log "  Found at: $found_path"
+        done
+    else
+        log "Component directory found at: $component_source"
     fi
     
     if [ ! -d "$component_source/admin" ]; then
