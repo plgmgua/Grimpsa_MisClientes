@@ -35,7 +35,7 @@ INSERT INTO `joomla_extensions` (
     '{"odoo_url":"https://grupoimpre.odoo.com/xmlrpc/2/object","odoo_database":"grupoimpre","odoo_user_id":"2","odoo_api_key":"","contacts_per_page":"20","enable_debug":"0","ot_destination_url":"https://grimpsa_webserver.grantsolutions.cc/index.php/orden-de-trabajo"}',
     '',
     0,
-    '0000-00-00 00:00:00',
+    NULL,
     0,
     0
 ) ON DUPLICATE KEY UPDATE
@@ -85,7 +85,7 @@ INSERT INTO `joomla_menu` (
     1,
     @extension_id,
     0,
-    '0000-00-00 00:00:00',
+    NULL,
     0,
     1,
     'class:contact',
