@@ -7,7 +7,7 @@
  * @license     GNU General Public License version 2 or later
  */
 
-namespace Grimpsa\Component\OdooContacts\Administrator\View\connectiontest;
+namespace Grimpsa\Component\OdooContacts\Administrator\View\ConnectionTest;
 
 defined('_JEXEC') or die;
 
