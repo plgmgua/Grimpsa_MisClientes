@@ -19,7 +19,7 @@ use Joomla\CMS\Router\Route;
             <div class="card-header">
                 <h3 class="card-title">
                     <?php echo Text::_('COM_ODOOCONTACTS_DASHBOARD_TITLE'); ?>
-                    <span class="badge bg-success ms-2">v1.1.9</span>
+                    <span class="badge bg-success ms-2">v1.2.0</span>
                 </h3>
             </div>
             <div class="card-body">
@@ -47,6 +47,25 @@ use Joomla\CMS\Router\Route;
                                 <a href="<?php echo Route::_('index.php?option=com_config&view=component&component=com_odoocontacts'); ?>" 
                                    class="btn btn-light">
                                     <?php echo Text::_('COM_ODOOCONTACTS_DASHBOARD_CONFIGURE'); ?>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row mt-3">
+                    <div class="col-md-6">
+                        <div class="card bg-info text-white">
+                            <div class="card-body">
+                                <h5 class="card-title">
+                                    <i class="fas fa-plug"></i> 
+                                    <?php echo Text::_('COM_ODOOCONTACTS_DASHBOARD_CONNECTION_TEST'); ?>
+                                </h5>
+                                <p class="card-text"><?php echo Text::_('COM_ODOOCONTACTS_DASHBOARD_CONNECTION_TEST_DESC'); ?></p>
+                                <a href="<?php echo Route::_('index.php?option=com_odoocontacts&view=connectiontest'); ?>" 
+                                   class="btn btn-light">
+                                    <i class="fas fa-plug"></i> 
+                                    <?php echo Text::_('COM_ODOOCONTACTS_DASHBOARD_TEST_CONNECTION'); ?>
                                 </a>
                             </div>
                         </div>
