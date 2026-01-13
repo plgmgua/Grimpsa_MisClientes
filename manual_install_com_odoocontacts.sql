@@ -5,6 +5,7 @@
 -- IMPORTANT: Replace 'joomla_' with your actual table prefix if different
 
 -- Step 1: Insert component into extensions table
+-- Note: Joomla 5 doesn't have 'system_data' column, so we exclude it
 INSERT INTO `joomla_extensions` (
     `name`,
     `type`,
@@ -17,7 +18,6 @@ INSERT INTO `joomla_extensions` (
     `manifest_cache`,
     `params`,
     `custom_data`,
-    `system_data`,
     `checked_out`,
     `checked_out_time`,
     `ordering`,
@@ -33,7 +33,6 @@ INSERT INTO `joomla_extensions` (
     0,
     '{"name":"COM_ODOOCONTACTS","type":"component","creationDate":"2025-01-27","author":"Grimpsa","copyright":"Copyright (C) 2025 Grimpsa. All rights reserved.","authorEmail":"admin@grimpsa.com","authorUrl":"https://grimpsa.com","version":"1.2.6-STABLE","description":"COM_ODOOCONTACTS_XML_DESCRIPTION","group":""}',
     '{"odoo_url":"https://grupoimpre.odoo.com/xmlrpc/2/object","odoo_database":"grupoimpre","odoo_user_id":"2","odoo_api_key":"","contacts_per_page":"20","enable_debug":"0","ot_destination_url":"https://grimpsa_webserver.grantsolutions.cc/index.php/orden-de-trabajo"}',
-    '',
     '',
     0,
     '0000-00-00 00:00:00',
