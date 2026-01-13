@@ -29,6 +29,7 @@
         <files folder="admin">
             <filename>services/provider.php</filename>
             <filename>config.xml</filename>
+            <filename>script.php</filename>
             <folder>forms</folder>
             <folder>src</folder>
             <folder>tmpl</folder>
