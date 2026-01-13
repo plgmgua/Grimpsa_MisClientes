@@ -24,12 +24,13 @@ MEDIA_PATH="$JOOMLA_ROOT/media/$COMPONENT_NAME"
 BACKUP_DIR="/var/backups/joomla_components"
 
 # Logging functions
+# All log messages go to stderr so they don't interfere with function return values
 log() {
-    echo -e "${BLUE}[$(date '+%Y-%m-%d %H:%M:%S')]${NC} $1"
+    echo -e "${BLUE}[$(date '+%Y-%m-%d %H:%M:%S')]${NC} $1" >&2
 }
 
 success() {
-    echo -e "${GREEN}[SUCCESS]${NC} $1"
+    echo -e "${GREEN}[SUCCESS]${NC} $1" >&2
 }
 
 error() {
@@ -37,7 +38,7 @@ error() {
 }
 
 warning() {
-    echo -e "${YELLOW}[WARNING]${NC} $1"
+    echo -e "${YELLOW}[WARNING]${NC} $1" >&2
 }
 
 # Function to check prerequisites
@@ -138,7 +139,8 @@ download_repository() {
     fi
     
     success "Repository downloaded successfully"
-    echo "$TEMP_DIR/repo"
+    # Output path to stdout (for capture), all logs go to stderr
+    echo "$TEMP_DIR/repo" >&1
 }
 
 # Function to verify downloaded files
