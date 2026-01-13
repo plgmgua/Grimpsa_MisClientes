@@ -249,29 +249,46 @@ class Com_OdoocontactsInstallerScript extends InstallerScript
         // Write immediate log first
         $this->writeImmediateLog("preflight() method called with type: {$type}");
         
-        $this->writeLog("=== PREFLIGHT START: {$type} ===");
-        $this->writeLog("Component: com_odoocontacts");
-        $this->writeLog("Joomla Version: " . JVERSION);
-        $this->writeLog("PHP Version: " . PHP_VERSION);
-        $this->writeLog("Installation Type: {$type}");
-
         try {
+            $this->writeImmediateLog("Starting preflight checks...");
+            $this->writeLog("=== PREFLIGHT START: {$type} ===");
+            $this->writeLog("Component: com_odoocontacts");
+            
+            // Log versions using immediate log (more reliable)
+            $this->writeImmediateLog("Joomla Version: " . (defined('JVERSION') ? JVERSION : 'Not defined'));
+            $this->writeImmediateLog("PHP Version: " . PHP_VERSION);
+            $this->writeLog("Joomla Version: " . JVERSION);
+            $this->writeLog("PHP Version: " . PHP_VERSION);
+            $this->writeLog("Installation Type: {$type}");
+
             // Check Joomla version
+            $this->writeImmediateLog("Checking Joomla version requirements...");
             $this->writeLog("Checking Joomla version requirements...");
-            if (version_compare(JVERSION, $this->minimumJoomla, 'lt')) {
-                $error = "Joomla {$this->minimumJoomla} or higher is required. You are running " . JVERSION;
+            if (!defined('JVERSION')) {
+                $error = "JVERSION constant is not defined";
+                $this->writeImmediateLog("ERROR: {$error}");
                 $this->writeLog($error, 'ERROR');
                 throw new RuntimeException($error);
             }
+            if (version_compare(JVERSION, $this->minimumJoomla, 'lt')) {
+                $error = "Joomla {$this->minimumJoomla} or higher is required. You are running " . JVERSION;
+                $this->writeImmediateLog("ERROR: {$error}");
+                $this->writeLog($error, 'ERROR');
+                throw new RuntimeException($error);
+            }
+            $this->writeImmediateLog("Joomla version check passed");
             $this->writeLog("Joomla version check passed");
 
             // Check PHP version
+            $this->writeImmediateLog("Checking PHP version requirements...");
             $this->writeLog("Checking PHP version requirements...");
             if (version_compare(PHP_VERSION, $this->minimumPhp, 'lt')) {
                 $error = "PHP {$this->minimumPhp} or higher is required. You are running " . PHP_VERSION;
+                $this->writeImmediateLog("ERROR: {$error}");
                 $this->writeLog($error, 'ERROR');
                 throw new RuntimeException($error);
             }
+            $this->writeImmediateLog("PHP version check passed");
             $this->writeLog("PHP version check passed");
 
             // Check file permissions
@@ -309,16 +326,30 @@ class Com_OdoocontactsInstallerScript extends InstallerScript
                 throw new RuntimeException($error, 0, $e);
             }
 
+            $this->writeImmediateLog("All preflight checks passed");
             $this->writeLog("=== PREFLIGHT COMPLETED SUCCESSFULLY ===");
+            $this->writeImmediateLog("preflight() returning true");
             return true;
 
         } catch (Exception $e) {
-            $this->writeLog("PREFLIGHT FAILED: " . $e->getMessage(), 'ERROR', [
+            $errorMsg = "PREFLIGHT FAILED: " . $e->getMessage();
+            $this->writeImmediateLog($errorMsg);
+            $this->writeImmediateLog("Error file: " . $e->getFile());
+            $this->writeImmediateLog("Error line: " . $e->getLine());
+            $this->writeLog($errorMsg, 'ERROR', [
                 'file' => $e->getFile(),
                 'line' => $e->getLine(),
                 'trace' => $e->getTraceAsString()
             ]);
             // Re-throw so Joomla can display the error
+            throw $e;
+        } catch (Throwable $e) {
+            // Catch any other errors (PHP 7+)
+            $errorMsg = "PREFLIGHT FATAL ERROR: " . $e->getMessage();
+            $this->writeImmediateLog($errorMsg);
+            $this->writeImmediateLog("Error file: " . $e->getFile());
+            $this->writeImmediateLog("Error line: " . $e->getLine());
+            $this->writeLog($errorMsg, 'ERROR');
             throw $e;
         }
     }
@@ -332,6 +363,7 @@ class Com_OdoocontactsInstallerScript extends InstallerScript
      */
     public function install($parent)
     {
+        $this->writeImmediateLog("install() method called");
         $this->writeLog("=== INSTALL START ===");
 
         try {
