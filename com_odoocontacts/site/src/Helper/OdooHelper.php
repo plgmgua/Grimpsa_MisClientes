@@ -1179,4 +1179,67 @@ class OdooHelper
 
         return $suppliers;
     }
+
+    /**
+     * Test the Odoo connection
+     *
+     * @return  array  Array with 'success' (boolean) and 'message' (string)
+     */
+    public function testConnection()
+    {
+        // Get configuration values
+        $odooUrl = $this->config->get('odoo_url', 'https://grupoimpre.odoo.com/xmlrpc/2/object');
+        $odooDb = $this->config->get('odoo_db', 'grupoimpre');
+        $odooUserId = $this->config->get('odoo_user_id', '2');
+        $odooApiKey = $this->config->get('odoo_api_key', '');
+        
+        // Validate required parameters
+        if (empty($odooUrl) || empty($odooDb) || empty($odooApiKey)) {
+            return [
+                'success' => false,
+                'message' => 'Missing required Odoo configuration parameters'
+            ];
+        }
+        
+        // Test with a simple search_count on res.partner (compatible with Odoo 19)
+        $testXmlPayload = '<?xml version="1.0"?>
+<methodCall>
+   <methodName>execute_kw</methodName>
+   <params>
+      <param>
+         <value><string>' . htmlspecialchars($odooDb, ENT_XML1, 'UTF-8') . '</string></value>
+      </param>
+      <param>
+         <value><int>' . (int)$odooUserId . '</int></value>
+      </param>
+      <param>
+         <value><string>' . htmlspecialchars($odooApiKey, ENT_XML1, 'UTF-8') . '</string></value>
+      </param>
+      <param>
+         <value><string>res.partner</string></value>
+      </param>
+      <param>
+         <value><string>search_count</string></value>
+      </param>
+      <param>
+         <value><array><data></data></array></value>
+      </param>
+   </params>
+</methodCall>';
+        
+        $result = $this->executeOdooCall($testXmlPayload);
+        
+        if ($result === false) {
+            return [
+                'success' => false,
+                'message' => 'Failed to connect to Odoo server. Please check your configuration and network connection.'
+            ];
+        }
+        
+        // If we get here, the connection is working
+        return [
+            'success' => true,
+            'message' => 'Successfully connected to Odoo ' . $odooDb . ' database'
+        ];
+    }
 }
