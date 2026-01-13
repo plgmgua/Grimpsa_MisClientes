@@ -6,10 +6,25 @@
 # Usage: sudo ./install_component.sh
 #
 
+# Ensure we're using bash, not sh
+if [ -z "$BASH_VERSION" ]; then
+    echo "ERROR: This script requires bash. Please run with: bash $0"
+    exit 1
+fi
+
 # Self-check validation
-SCRIPT_PATH="${BASH_SOURCE[0]}"
+# Use a more portable method to get script path
+if [ -n "$BASH_SOURCE" ]; then
+    SCRIPT_PATH="${BASH_SOURCE[0]}"
+else
+    SCRIPT_PATH="$0"
+fi
+
+# Remove any carriage returns (fix CRLF line endings)
+SCRIPT_PATH=$(echo "$SCRIPT_PATH" | tr -d '\r')
+
 SCRIPT_DIR="$(cd "$(dirname "$SCRIPT_PATH")" && pwd)"
-SCRIPT_NAME="$(basename "$SCRIPT_PATH")"
+SCRIPT_NAME="$(basename "$SCRIPT_PATH" | tr -d '\r')"
 FULL_SCRIPT_PATH="$SCRIPT_DIR/$SCRIPT_NAME"
 
 # Check if script file exists
@@ -43,13 +58,21 @@ if [ ! -x "$FULL_SCRIPT_PATH" ]; then
     echo "Execute permission added"
 fi
 
-# Check for Windows line endings (CRLF)
-if file "$FULL_SCRIPT_PATH" | grep -q "CRLF"; then
+# Check for Windows line endings (CRLF) and fix them
+if file "$FULL_SCRIPT_PATH" 2>/dev/null | grep -q "CRLF\|CR line"; then
     echo "WARNING: Script has Windows line endings (CRLF)"
-    echo "This may cause 'No such file or directory' errors"
-    echo "Please convert to Unix line endings: dos2unix $FULL_SCRIPT_PATH"
-    echo ""
-    echo "Attempting to continue anyway..."
+    echo "Attempting to fix automatically..."
+    if command -v dos2unix &> /dev/null; then
+        dos2unix "$FULL_SCRIPT_PATH" 2>/dev/null && echo "Fixed line endings"
+    elif command -v sed &> /dev/null; then
+        sed -i 's/\r$//' "$FULL_SCRIPT_PATH" 2>/dev/null && echo "Fixed line endings with sed"
+    else
+        echo "ERROR: Cannot fix line endings. Please install dos2unix or convert manually"
+        echo "Run: dos2unix $FULL_SCRIPT_PATH"
+        exit 1
+    fi
+    # Re-read the script after fixing
+    exec bash "$FULL_SCRIPT_PATH" "$@"
 fi
 
 # Verify bash is available
@@ -58,11 +81,13 @@ if ! command -v bash &> /dev/null; then
     exit 1
 fi
 
-# Test if script can be executed
-if ! bash -n "$FULL_SCRIPT_PATH" 2>/dev/null; then
-    echo "ERROR: Script has syntax errors"
-    bash -n "$FULL_SCRIPT_PATH"
-    exit 1
+# Test if script can be executed (skip if we just fixed line endings)
+if [ "$1" != "--line-endings-fixed" ]; then
+    if ! bash -n "$FULL_SCRIPT_PATH" 2>/dev/null; then
+        echo "ERROR: Script has syntax errors"
+        bash -n "$FULL_SCRIPT_PATH" 2>&1 | head -10
+        exit 1
+    fi
 fi
 
 set -e  # Exit on error
