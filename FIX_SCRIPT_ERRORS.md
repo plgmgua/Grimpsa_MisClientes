@@ -14,13 +14,10 @@ If you have `dos2unix` installed:
 dos2unix install_component.sh
 ```
 
-If you don't have `dos2unix`, install it:
+If you don't have `dos2unix`, install it on Ubuntu:
 ```bash
-# Debian/Ubuntu
+sudo apt-get update
 sudo apt-get install dos2unix
-
-# CentOS/RHEL
-sudo yum install dos2unix
 ```
 
 Or use `sed` to fix it:

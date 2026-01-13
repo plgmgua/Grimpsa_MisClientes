@@ -134,22 +134,41 @@ if [ "$EUID" -ne 0 ]; then
     exit 1
 fi
 
-# Find web server user
+# Find web server user (Ubuntu/Debian with Apache)
+# On Ubuntu, Apache runs as www-data by default
 if [ -f /etc/apache2/apache2.conf ]; then
     WEB_USER=$(grep -i "^User" /etc/apache2/apache2.conf 2>/dev/null | awk '{print $2}' | head -1)
+    if [ -z "$WEB_USER" ]; then
+        # Check environment variable set by Apache
+        WEB_USER=$(apache2ctl -S 2>/dev/null | grep "User:" | awk '{print $2}' | head -1)
+    fi
 elif [ -f /etc/httpd/httpd.conf ]; then
     WEB_USER=$(grep -i "^User" /etc/httpd/httpd.conf 2>/dev/null | awk '{print $2}' | head -1)
 else
-    # Try to detect from running process
-    WEB_USER=$(ps aux | grep -E "(apache|httpd|nginx)" | grep -v grep | head -1 | awk '{print $1}')
+    # Try to detect from running Apache process (Ubuntu)
+    WEB_USER=$(ps aux | grep -E "apache2" | grep -v grep | head -1 | awk '{print $1}')
 fi
 
-# Default to www-data if not found
+# Default to www-data for Ubuntu/Debian
 if [ -z "$WEB_USER" ]; then
     WEB_USER="www-data"
-    print_warning "Could not detect web server user, defaulting to: $WEB_USER"
+    print_info "Using default Ubuntu Apache user: $WEB_USER"
 else
     print_info "Detected web server user: $WEB_USER"
+fi
+
+# Verify the user exists
+if ! id "$WEB_USER" &>/dev/null; then
+    print_error "Web server user '$WEB_USER' does not exist on this system"
+    print_info "On Ubuntu, Apache typically uses 'www-data'"
+    print_info "Creating user or using www-data..."
+    if id "www-data" &>/dev/null; then
+        WEB_USER="www-data"
+        print_info "Using www-data instead"
+    else
+        print_error "Neither $WEB_USER nor www-data exists. Please check your Apache configuration."
+        exit 1
+    fi
 fi
 
 # Check if tmp directory exists
