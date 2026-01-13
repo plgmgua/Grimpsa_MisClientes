@@ -1,41 +1,17 @@
--- Table Schema Verification Script for Joomla 5
+-- Table Schema Verification Script for Joomla 5.3.4
 -- Run this FIRST to check what columns actually exist in your tables
 -- Table prefix: joomla_ (replace with your actual prefix)
 
 -- IMPORTANT: Replace 'joomla_' with your actual table prefix if different
 
--- Check extensions table structure
-SELECT 
-    'EXTENSIONS TABLE COLUMNS' AS 'Table Check',
-    COLUMN_NAME AS 'Column Name',
-    DATA_TYPE AS 'Data Type',
-    IS_NULLABLE AS 'Nullable'
-FROM INFORMATION_SCHEMA.COLUMNS
-WHERE TABLE_SCHEMA = DATABASE()
-AND TABLE_NAME = 'joomla_extensions'
-ORDER BY ORDINAL_POSITION;
+-- Check extensions table structure (using DESCRIBE - more reliable)
+DESCRIBE `joomla_extensions`;
 
 -- Check menu table structure
-SELECT 
-    'MENU TABLE COLUMNS' AS 'Table Check',
-    COLUMN_NAME AS 'Column Name',
-    DATA_TYPE AS 'Data Type',
-    IS_NULLABLE AS 'Nullable'
-FROM INFORMATION_SCHEMA.COLUMNS
-WHERE TABLE_SCHEMA = DATABASE()
-AND TABLE_NAME = 'joomla_menu'
-ORDER BY ORDINAL_POSITION;
+DESCRIBE `joomla_menu`;
 
 -- Check assets table structure
-SELECT 
-    'ASSETS TABLE COLUMNS' AS 'Table Check',
-    COLUMN_NAME AS 'Column Name',
-    DATA_TYPE AS 'Data Type',
-    IS_NULLABLE AS 'Nullable'
-FROM INFORMATION_SCHEMA.COLUMNS
-WHERE TABLE_SCHEMA = DATABASE()
-AND TABLE_NAME = 'joomla_assets'
-ORDER BY ORDINAL_POSITION;
+DESCRIBE `joomla_assets`;
 
 -- Check if component already exists
 SELECT 
@@ -46,12 +22,13 @@ SELECT
     `enabled` AS 'Enabled',
     `type` AS 'Type'
 FROM `joomla_extensions`
-WHERE `element` = 'com_odoocontacts' AND `type` = 'component';
+WHERE `element` = 'com_odoocontacts' AND `type` = 'component'
+LIMIT 1;
 
 -- Summary
 SELECT 
     'SUMMARY' AS 'Info',
-    (SELECT COUNT(*) FROM `joomla_extensions` WHERE `element` = 'com_odoocontacts' AND `type` = 'component') AS 'Component Exists',
-    (SELECT COUNT(*) FROM `joomla_menu` WHERE `link` LIKE '%com_odoocontacts%') AS 'Menu Items',
+    (SELECT COUNT(*) FROM `joomla_extensions` WHERE `element` = 'com_odoocontacts' AND `type` = 'component') AS 'Component_Exists',
+    (SELECT COUNT(*) FROM `joomla_menu` WHERE `link` LIKE '%com_odoocontacts%') AS 'Menu_Items',
     (SELECT COUNT(*) FROM `joomla_assets` WHERE `name` = 'com_odoocontacts') AS 'Assets';
 
