@@ -9,6 +9,26 @@
 
 defined('_JEXEC') or die;
 
+// Immediate logging - write to multiple locations as soon as script loads
+$installerLogLocations = [
+    (defined('JPATH_ADMINISTRATOR') ? JPATH_ADMINISTRATOR : __DIR__ . '/../../..') . '/logs/com_odoocontacts_install.log',
+    (defined('JPATH_ROOT') ? JPATH_ROOT : dirname(__DIR__, 3)) . '/com_odoocontacts_install.log',
+    sys_get_temp_dir() . '/com_odoocontacts_install.log',
+    '/tmp/com_odoocontacts_install.log'
+];
+
+$initialLog = date('Y-m-d H:i:s') . " [SCRIPT_LOADED] Installer script file loaded\n";
+foreach ($installerLogLocations as $logPath) {
+    $logDir = dirname($logPath);
+    if (!is_dir($logDir)) {
+        @mkdir($logDir, 0755, true);
+    }
+    if (is_writable($logDir) || is_writable($logPath)) {
+        @file_put_contents($logPath, $initialLog, FILE_APPEND | LOCK_EX);
+    }
+}
+error_log("com_odoocontacts installer script loaded");
+
 use Joomla\CMS\Factory;
 use Joomla\CMS\Installer\InstallerScript;
 use Joomla\CMS\Language\Text;
@@ -51,8 +71,47 @@ class Com_OdoocontactsInstallerScript extends InstallerScript
      */
     public function __construct()
     {
+        // Set log file path - use multiple fallback locations
         $this->logFile = JPATH_ADMINISTRATOR . '/logs/com_odoocontacts_install.log';
+        
+        // Write immediate log entry to verify script is loading
+        $this->writeImmediateLog("Installer script constructor called");
+        
         $this->setupLogging();
+    }
+    
+    /**
+     * Write log immediately without setup (for early errors)
+     *
+     * @param   string  $message  The log message
+     *
+     * @return  void
+     */
+    private function writeImmediateLog($message)
+    {
+        $timestamp = date('Y-m-d H:i:s');
+        $logEntry = "[{$timestamp}] [IMMEDIATE] {$message}" . PHP_EOL;
+        
+        // Try multiple locations
+        $locations = [
+            $this->logFile,
+            JPATH_ROOT . '/com_odoocontacts_install.log',
+            sys_get_temp_dir() . '/com_odoocontacts_install.log',
+            '/tmp/com_odoocontacts_install.log'
+        ];
+        
+        foreach ($locations as $location) {
+            $dir = dirname($location);
+            if (!is_dir($dir)) {
+                @mkdir($dir, 0755, true);
+            }
+            if (is_writable($dir) || is_writable($location)) {
+                @file_put_contents($location, $logEntry, FILE_APPEND | LOCK_EX);
+            }
+        }
+        
+        // Also to PHP error log
+        error_log("com_odoocontacts installer: {$message}");
     }
 
     /**
@@ -63,18 +122,47 @@ class Com_OdoocontactsInstallerScript extends InstallerScript
     private function setupLogging()
     {
         try {
-            // Ensure log directory exists
+            // Ensure log directory exists - use multiple methods for reliability
             $logDir = dirname($this->logFile);
+            
             if (!is_dir($logDir)) {
-                Folder::create($logDir);
+                // Try using Folder class first
+                if (class_exists('Joomla\CMS\Filesystem\Folder')) {
+                    Folder::create($logDir);
+                } else {
+                    // Fallback to native PHP
+                    @mkdir($logDir, 0755, true);
+                }
+            }
+
+            // Ensure directory is writable
+            if (is_dir($logDir) && !is_writable($logDir)) {
+                @chmod($logDir, 0755);
             }
 
             // Clear previous log for fresh installation
             if (file_exists($this->logFile)) {
-                File::delete($this->logFile);
+                if (class_exists('Joomla\CMS\Filesystem\File')) {
+                    File::delete($this->logFile);
+                } else {
+                    @unlink($this->logFile);
+                }
             }
+
+            // Write initial log entry to verify logging works
+            $this->writeLog("=== INSTALLER SCRIPT LOADED ===", 'INFO', [
+                'php_version' => PHP_VERSION,
+                'joomla_version' => defined('JVERSION') ? JVERSION : 'Unknown',
+                'log_file' => $this->logFile,
+                'log_dir_writable' => is_writable($logDir) ? 'Yes' : 'No'
+            ]);
         } catch (Exception $e) {
-            // If we can't set up logging, continue anyway
+            // Try to log the error itself
+            $errorMsg = "Failed to setup logging: " . $e->getMessage();
+            error_log($errorMsg);
+            // Try to write to a fallback location
+            $fallbackLog = JPATH_ROOT . '/com_odoocontacts_install.log';
+            @file_put_contents($fallbackLog, date('Y-m-d H:i:s') . " - " . $errorMsg . PHP_EOL, FILE_APPEND);
         }
     }
 
@@ -94,12 +182,37 @@ class Com_OdoocontactsInstallerScript extends InstallerScript
             $contextStr = !empty($context) ? ' | Context: ' . json_encode($context) : '';
             $logEntry = "[{$timestamp}] [{$level}] {$message}{$contextStr}" . PHP_EOL;
             
-            file_put_contents($this->logFile, $logEntry, FILE_APPEND | LOCK_EX);
+            // Try to write to primary log file
+            $written = @file_put_contents($this->logFile, $logEntry, FILE_APPEND | LOCK_EX);
             
-            // Also log to Joomla's log system
-            Log::add($message, constant('Log::' . $level), 'com_odoocontacts');
+            // If primary log fails, try fallback locations
+            if ($written === false) {
+                // Try root directory
+                $fallbackLog = JPATH_ROOT . '/com_odoocontacts_install.log';
+                @file_put_contents($fallbackLog, $logEntry, FILE_APPEND | LOCK_EX);
+                
+                // Also try system temp directory
+                $tempLog = sys_get_temp_dir() . '/com_odoocontacts_install.log';
+                @file_put_contents($tempLog, $logEntry, FILE_APPEND | LOCK_EX);
+            }
+            
+            // Also log to Joomla's log system if available
+            if (class_exists('Joomla\CMS\Log\Log')) {
+                try {
+                    $logLevel = defined('Log::' . $level) ? constant('Log::' . $level) : Log::INFO;
+                    Log::add($message, $logLevel, 'com_odoocontacts');
+                } catch (Exception $e) {
+                    // Ignore Joomla log errors
+                }
+            }
+            
+            // Also write to PHP error log as backup
+            error_log("com_odoocontacts [{$level}]: {$message}");
+            
         } catch (Exception $e) {
-            // Silently fail if logging fails
+            // Last resort: write to PHP error log
+            error_log("com_odoocontacts log write failed: " . $e->getMessage());
+            error_log("Original message: {$message}");
         }
     }
 
@@ -113,6 +226,9 @@ class Com_OdoocontactsInstallerScript extends InstallerScript
      */
     public function preflight($type, $parent)
     {
+        // Write immediate log first
+        $this->writeImmediateLog("preflight() method called with type: {$type}");
+        
         $this->writeLog("=== PREFLIGHT START: {$type} ===");
         $this->writeLog("Component: com_odoocontacts");
         $this->writeLog("Joomla Version: " . JVERSION);
