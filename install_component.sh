@@ -347,16 +347,35 @@ print_info "Permissions set"
 
 # Verify installation
 print_info "Verifying installation..."
+
+# Check for installer script (can be in admin/ or admin/admin/ depending on structure)
 if [ -f "$ADMIN_COMPONENT_DIR/admin/script.php" ]; then
-    print_info "✓ Installer script found"
+    print_info "✓ Installer script found: admin/script.php"
+elif [ -f "$ADMIN_COMPONENT_DIR/script.php" ]; then
+    print_info "✓ Installer script found: script.php"
 else
-    print_warning "✗ Installer script not found (may be in different location)"
+    # Try to find it anywhere in admin directory
+    FOUND_SCRIPT=$(find "$ADMIN_COMPONENT_DIR" -name "script.php" -type f 2>/dev/null | head -1)
+    if [ -n "$FOUND_SCRIPT" ]; then
+        print_info "✓ Installer script found: $FOUND_SCRIPT"
+    else
+        print_warning "✗ Installer script not found (may be optional)"
+    fi
 fi
 
+# Check for config file
 if [ -f "$ADMIN_COMPONENT_DIR/admin/config.xml" ]; then
-    print_info "✓ Config file found"
+    print_info "✓ Config file found: admin/config.xml"
+elif [ -f "$ADMIN_COMPONENT_DIR/config.xml" ]; then
+    print_info "✓ Config file found: config.xml"
 else
-    print_warning "✗ Config file not found"
+    # Try to find it anywhere in admin directory
+    FOUND_CONFIG=$(find "$ADMIN_COMPONENT_DIR" -name "config.xml" -type f 2>/dev/null | head -1)
+    if [ -n "$FOUND_CONFIG" ]; then
+        print_info "✓ Config file found: $FOUND_CONFIG"
+    else
+        print_warning "✗ Config file not found (may be optional)"
+    fi
 fi
 
 if [ -d "$SITE_COMPONENT_DIR/src" ]; then
@@ -364,6 +383,12 @@ if [ -d "$SITE_COMPONENT_DIR/src" ]; then
 else
     print_warning "✗ Site source directory not found"
 fi
+
+# Count files installed
+ADMIN_FILES=$(find "$ADMIN_COMPONENT_DIR" -type f 2>/dev/null | wc -l)
+SITE_FILES=$(find "$SITE_COMPONENT_DIR" -type f 2>/dev/null | wc -l)
+MEDIA_FILES=$(find "$MEDIA_DIR" -type f 2>/dev/null | wc -l)
+print_info "Files installed: Admin=$ADMIN_FILES, Site=$SITE_FILES, Media=$MEDIA_FILES"
 
 # Summary
 echo ""
