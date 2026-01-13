@@ -26,6 +26,12 @@ if (file_exists($componentClassFile)) {
     require_once $componentClassFile;
 }
 
+// Explicitly require controller classes to ensure they're loaded
+$controllerFile = __DIR__ . '/../src/Controller/DisplayController.php';
+if (file_exists($controllerFile)) {
+    require_once $controllerFile;
+}
+
 use Grimpsa\Component\OdooContacts\Administrator\Extension\OdooContactsComponent;
 
 /**
