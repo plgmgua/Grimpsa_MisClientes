@@ -42,11 +42,25 @@ WHERE `element` LIKE '%odoocontacts%';
 ```
 
 ### Step 4: Check File Permissions
-Via FTP or file manager, check these directories are **writable**:
-- `/tmp` (Joomla temp directory)
-- `/administrator/components`
-- `/components`
-- `/administrator/logs`
+**Your Joomla path:** `/var/www/grimpsa_webserver`
+
+Via SSH or file manager, check these directories are **writable**:
+- `/var/www/grimpsa_webserver/tmp` (Joomla temp directory)
+- `/var/www/grimpsa_webserver/administrator/components`
+- `/var/www/grimpsa_webserver/components`
+- `/var/www/grimpsa_webserver/administrator/logs`
+
+**Quick check via SSH:**
+```bash
+ls -ld /var/www/grimpsa_webserver/tmp
+ls -ld /var/www/grimpsa_webserver/administrator/components
+ls -ld /var/www/grimpsa_webserver/components
+ls -ld /var/www/grimpsa_webserver/administrator/logs
+```
+
+All should show permissions like `drwxrwxr-x` (755) or `drwxrwxrwx` (777) and be owned by your web server user (usually `www-data` or `apache`).
+
+**See `CHECK_PERMISSIONS.md` for detailed permission checking guide.**
 
 ### Step 5: Check Joomla Logs
 1. Go to **System → System Information → System Information**
