@@ -35,7 +35,12 @@ class OdooConnectHelper
         $odooDb = $config->get('odoo_db') ?: $config->get('odoo_database', 'grupoimpre');
         // Try both odoo_user_id and odoo_username (convert username to ID if needed)
         $odooUserId = $config->get('odoo_user_id') ?: $config->get('odoo_username', '2');
+        // Get API key from config, fallback to default if empty (password fields may be empty even if set)
         $odooApiKey = $config->get('odoo_api_key', '');
+        if (empty($odooApiKey)) {
+            // Use default API key from manifest if config is empty
+            $odooApiKey = '2386bb5ae66c7fd9022feaf82148680c4cf4ce3b';
+        }
         
         // Validate required parameters
         if (empty($odooUrl) || empty($odooDb) || empty($odooApiKey)) {
