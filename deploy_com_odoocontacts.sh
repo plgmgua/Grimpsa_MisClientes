@@ -168,34 +168,61 @@ verify_downloaded_files() {
     local missing_files=()
     
     # Use absolute path and verify it exists
-    if [ ! -d "$component_source" ]; then
+    # Test the path directly
+    log "Testing component source path: $component_source"
+    if test -d "$component_source"; then
+        log "✓ Component directory EXISTS at: $component_source"
+        log "Directory contents:"
+        ls -la "$component_source" 2>&1 | head -10 | while read line; do
+            log "  $line"
+        done
+    else
         missing_files+=("$COMPONENT_NAME/")
-        error "Component directory not found at: $component_source"
+        error "Component directory NOT FOUND at: $component_source"
+        error "Testing with test command: $(test -d "$component_source" && echo 'exists' || echo 'does not exist')"
         error "Absolute path check: $(readlink -f "$component_source" 2>/dev/null || echo 'path resolution failed')"
         
         # Try to find where it actually is
-        log "Searching for component directory..."
+        log "Searching for component directory in: $repo_path"
         find "$repo_path" -maxdepth 2 -type d -name "$COMPONENT_NAME" 2>/dev/null | while read found_path; do
             log "  Found at: $found_path"
+            log "  Testing: $(test -d "$found_path" && echo 'accessible' || echo 'not accessible')"
         done
-    else
-        log "Component directory found at: $component_source"
     fi
     
-    if [ ! -d "$component_source/admin" ]; then
-        missing_files+=("$COMPONENT_NAME/admin/")
-    fi
-    
-    if [ ! -d "$component_source/site" ]; then
-        missing_files+=("$COMPONENT_NAME/site/")
-    fi
-    
-    if [ ! -d "$component_source/media" ]; then
-        missing_files+=("$COMPONENT_NAME/media/")
-    fi
-    
-    if [ ! -f "$component_source/$MANIFEST_FILE" ]; then
-        missing_files+=("$COMPONENT_NAME/$MANIFEST_FILE")
+    # Only check subdirectories if main directory exists
+    if [ -d "$component_source" ]; then
+        if [ ! -d "$component_source/admin" ]; then
+            missing_files+=("$COMPONENT_NAME/admin/")
+            error "Admin directory not found: $component_source/admin"
+        else
+            log "✓ Admin directory found"
+        fi
+        
+        if [ ! -d "$component_source/site" ]; then
+            missing_files+=("$COMPONENT_NAME/site/")
+            error "Site directory not found: $component_source/site"
+        else
+            log "✓ Site directory found"
+        fi
+        
+        if [ ! -d "$component_source/media" ]; then
+            missing_files+=("$COMPONENT_NAME/media/")
+            error "Media directory not found: $component_source/media"
+        else
+            log "✓ Media directory found"
+        fi
+        
+        if [ ! -f "$component_source/$MANIFEST_FILE" ]; then
+            missing_files+=("$COMPONENT_NAME/$MANIFEST_FILE")
+            error "Manifest file not found: $component_source/$MANIFEST_FILE"
+            log "Looking for XML files in component directory:"
+            find "$component_source" -maxdepth 1 -name "*.xml" 2>/dev/null | while read xml_file; do
+                log "  Found XML: $(basename "$xml_file")"
+            done
+        else
+            log "✓ Manifest file found: $component_source/$MANIFEST_FILE"
+        fi
     fi
     
     if [ ${#missing_files[@]} -gt 0 ]; then
