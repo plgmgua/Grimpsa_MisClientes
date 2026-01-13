@@ -32,6 +32,17 @@ if (file_exists($controllerFile)) {
     require_once $controllerFile;
 }
 
+// Explicitly require view classes to ensure they're loaded
+$dashboardViewFile = __DIR__ . '/../src/View/Dashboard/HtmlView.php';
+if (file_exists($dashboardViewFile)) {
+    require_once $dashboardViewFile;
+}
+
+$connectionTestViewFile = __DIR__ . '/../src/View/ConnectionTest/HtmlView.php';
+if (file_exists($connectionTestViewFile)) {
+    require_once $connectionTestViewFile;
+}
+
 use Grimpsa\Component\OdooContacts\Administrator\Extension\OdooContactsComponent;
 
 /**
