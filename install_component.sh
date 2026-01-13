@@ -69,30 +69,36 @@ print_info "Looking for component files in $TMP_DIR..."
 
 # List what's in tmp for debugging
 print_info "Contents of $TMP_DIR:"
-ls -la "$TMP_DIR" | head -20 || true
+ls -la "$TMP_DIR" 2>/dev/null | head -20 || true
 echo ""
 
 # Check for common tmp extraction patterns
 COMPONENT_SOURCE=""
 
-# First, check if com_odoocontacts is directly in tmp
+# First, check if com_odoocontacts is directly in tmp (most common case)
 if [ -d "$TMP_DIR/com_odoocontacts" ]; then
     COMPONENT_SOURCE="$TMP_DIR/com_odoocontacts"
     print_info "Found component in: $COMPONENT_SOURCE"
-# Check for install_* subdirectories
+# Check for install_* subdirectories (Joomla auto-extraction)
 elif [ -d "$TMP_DIR" ]; then
-    # Look for any com_odoocontacts directory in install_* folders
-    FOUND=$(find "$TMP_DIR" -maxdepth 3 -type d -name "com_odoocontacts" 2>/dev/null | head -1)
-    if [ -n "$FOUND" ] && [ -d "$FOUND" ]; then
-        COMPONENT_SOURCE="$FOUND"
-        print_info "Found component in: $COMPONENT_SOURCE"
-    else
-        # Look for any directory with odoocontacts.xml
-        FOUND=$(find "$TMP_DIR" -maxdepth 3 -name "odoocontacts.xml" -type f 2>/dev/null | head -1)
-        if [ -n "$FOUND" ] && [ -f "$FOUND" ]; then
-            COMPONENT_SOURCE=$(dirname "$FOUND")
-            print_info "Found component manifest, using: $COMPONENT_SOURCE"
+    # Look for install_* directories that might contain the component
+    for install_dir in "$TMP_DIR"/install_*; do
+        if [ -d "$install_dir" ] && [ -d "$install_dir/com_odoocontacts" ]; then
+            COMPONENT_SOURCE="$install_dir/com_odoocontacts"
+            print_info "Found component in: $COMPONENT_SOURCE"
+            break
         fi
+    done
+    
+    # If still not found, look for any com_odoocontacts directory
+    if [ -z "$COMPONENT_SOURCE" ]; then
+        for dir in "$TMP_DIR"/*; do
+            if [ -d "$dir" ] && [ -f "$dir/odoocontacts.xml" ]; then
+                COMPONENT_SOURCE="$dir"
+                print_info "Found component by manifest file: $COMPONENT_SOURCE"
+                break
+            fi
+        done
     fi
 fi
 
@@ -113,9 +119,32 @@ fi
 print_info "Found component source: $COMPONENT_SOURCE"
 
 # Verify component structure
+print_info "Verifying component structure..."
 if [ ! -f "$COMPONENT_SOURCE/odoocontacts.xml" ]; then
     print_error "Component manifest file (odoocontacts.xml) not found in $COMPONENT_SOURCE"
+    print_info "Files in component directory:"
+    ls -la "$COMPONENT_SOURCE" 2>/dev/null || true
     exit 1
+fi
+print_info "✓ Manifest file found: $COMPONENT_SOURCE/odoocontacts.xml"
+
+# Check for required directories
+if [ -d "$COMPONENT_SOURCE/admin" ]; then
+    print_info "✓ Admin directory found"
+else
+    print_warning "Admin directory not found (may be optional)"
+fi
+
+if [ -d "$COMPONENT_SOURCE/site" ]; then
+    print_info "✓ Site directory found"
+else
+    print_warning "Site directory not found (may be optional)"
+fi
+
+if [ -d "$COMPONENT_SOURCE/media" ]; then
+    print_info "✓ Media directory found"
+else
+    print_warning "Media directory not found (may be optional)"
 fi
 
 print_info "Component structure verified"
