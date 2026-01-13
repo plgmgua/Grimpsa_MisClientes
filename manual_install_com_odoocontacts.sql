@@ -126,14 +126,13 @@ INSERT INTO `joomla_assets` (
 SET @root_id = (SELECT `id` FROM `joomla_assets` WHERE `name` = 'root' LIMIT 1);
 SET @component_asset_id = (SELECT `id` FROM `joomla_assets` WHERE `name` = 'com_odoocontacts' LIMIT 1);
 
--- Update lft/rgt if component asset exists
+-- Update parent_id and level (lft/rgt will be fixed by Joomla on next access)
+-- Note: Setting lft/rgt to 0 is fine - Joomla will rebuild the tree automatically
 UPDATE `joomla_assets`
 SET 
     `parent_id` = @root_id,
-    `lft` = (SELECT COALESCE(MAX(`rgt`), 0) + 1 FROM `joomla_assets` WHERE `parent_id` = @root_id),
-    `rgt` = (SELECT COALESCE(MAX(`rgt`), 0) + 2 FROM `joomla_assets` WHERE `parent_id` = @root_id),
     `level` = 1
-WHERE `id` = @component_asset_id;
+WHERE `id` = @component_asset_id AND `parent_id` != @root_id;
 
 -- Step 6: Verify installation
 SELECT 
