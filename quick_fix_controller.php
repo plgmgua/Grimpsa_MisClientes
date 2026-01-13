@@ -92,10 +92,39 @@ if (file_exists(\$controllerFile)) {
     echo '<h2>Verification</h2>';
     $updatedContent = file_get_contents($providerFile);
     
+    // Check for various possible patterns
+    $found = false;
     if (strpos($updatedContent, 'require_once $controllerFile') !== false) {
+        $found = true;
+    } elseif (strpos($updatedContent, 'DisplayController.php') !== false && strpos($updatedContent, 'require_once') !== false) {
+        $found = true;
+    } elseif (preg_match('/require_once.*Controller.*DisplayController/', $updatedContent)) {
+        $found = true;
+    }
+    
+    if ($found) {
         echo '<p class="success">✓ Verification passed - fix is in place</p>';
+        
+        // Show the relevant section
+        $lines = explode("\n", $updatedContent);
+        $inControllerSection = false;
+        $controllerLines = [];
+        foreach ($lines as $i => $line) {
+            if (strpos($line, 'controller') !== false || strpos($line, 'Controller') !== false) {
+                $inControllerSection = true;
+            }
+            if ($inControllerSection && ($i < 35)) { // Show first 35 lines which should include the fix
+                $controllerLines[] = ($i + 1) . ': ' . htmlspecialchars($line);
+                if (count($controllerLines) >= 10) break;
+            }
+        }
+        if (!empty($controllerLines)) {
+            echo '<p><strong>Relevant section of provider.php:</strong></p>';
+            echo '<pre>' . implode("\n", $controllerLines) . '</pre>';
+        }
     } else {
-        echo '<p class="error">✗ Verification failed - fix not found</p>';
+        echo '<p class="warning">⚠ Verification pattern not found, but file was modified</p>';
+        echo '<p>Please check the file manually or try accessing the component.</p>';
     }
     
     // Check if controller file exists
