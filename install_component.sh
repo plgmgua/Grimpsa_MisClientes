@@ -269,14 +269,25 @@ mkdir -p "$SITE_COMPONENT_DIR"
 mkdir -p "$MEDIA_DIR"
 
 # Copy admin files
+# IMPORTANT: Copy contents of admin/ directly to component directory (not admin/admin/)
 if [ -d "$COMPONENT_SOURCE/admin" ]; then
     print_info "Copying admin files from $COMPONENT_SOURCE/admin..."
     if [ ! -d "$ADMIN_COMPONENT_DIR" ]; then
         mkdir -p "$ADMIN_COMPONENT_DIR"
     fi
+    # Copy all contents of admin/ directly to component directory
+    # This creates: /administrator/components/com_odoocontacts/src/Extension/...
+    # NOT: /administrator/components/com_odoocontacts/admin/src/Extension/...
     cp -r "$COMPONENT_SOURCE/admin"/* "$ADMIN_COMPONENT_DIR/" 2>&1
     if [ $? -eq 0 ]; then
         print_info "Admin files copied successfully"
+        # Verify critical file is in correct location
+        if [ -f "$ADMIN_COMPONENT_DIR/src/Extension/OdooContactsComponent.php" ]; then
+            print_info "✓ Extension class file is in correct location"
+        else
+            print_warning "⚠ Extension class file location might be wrong"
+            print_info "  Expected: $ADMIN_COMPONENT_DIR/src/Extension/OdooContactsComponent.php"
+        fi
     else
         print_error "Failed to copy admin files"
         exit 1
