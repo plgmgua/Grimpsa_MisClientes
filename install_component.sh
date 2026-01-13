@@ -6,6 +6,65 @@
 # Usage: sudo ./install_component.sh
 #
 
+# Self-check validation
+SCRIPT_PATH="${BASH_SOURCE[0]}"
+SCRIPT_DIR="$(cd "$(dirname "$SCRIPT_PATH")" && pwd)"
+SCRIPT_NAME="$(basename "$SCRIPT_PATH")"
+FULL_SCRIPT_PATH="$SCRIPT_DIR/$SCRIPT_NAME"
+
+# Check if script file exists
+if [ ! -f "$FULL_SCRIPT_PATH" ]; then
+    echo "ERROR: Script file not found: $FULL_SCRIPT_PATH"
+    echo "Current directory: $(pwd)"
+    echo "Script name: $SCRIPT_NAME"
+    echo ""
+    echo "Please ensure:"
+    echo "1. The script file exists in the current directory"
+    echo "2. You're running it from the correct location"
+    echo "3. The file name is correct: install_component.sh"
+    exit 1
+fi
+
+# Check if script is readable
+if [ ! -r "$FULL_SCRIPT_PATH" ]; then
+    echo "ERROR: Script file is not readable: $FULL_SCRIPT_PATH"
+    echo "Please check file permissions"
+    exit 1
+fi
+
+# Check if script has execute permission
+if [ ! -x "$FULL_SCRIPT_PATH" ]; then
+    echo "WARNING: Script does not have execute permission"
+    echo "Attempting to fix..."
+    chmod +x "$FULL_SCRIPT_PATH" 2>/dev/null || {
+        echo "ERROR: Cannot add execute permission. Please run: chmod +x $FULL_SCRIPT_PATH"
+        exit 1
+    }
+    echo "Execute permission added"
+fi
+
+# Check for Windows line endings (CRLF)
+if file "$FULL_SCRIPT_PATH" | grep -q "CRLF"; then
+    echo "WARNING: Script has Windows line endings (CRLF)"
+    echo "This may cause 'No such file or directory' errors"
+    echo "Please convert to Unix line endings: dos2unix $FULL_SCRIPT_PATH"
+    echo ""
+    echo "Attempting to continue anyway..."
+fi
+
+# Verify bash is available
+if ! command -v bash &> /dev/null; then
+    echo "ERROR: bash is not available on this system"
+    exit 1
+fi
+
+# Test if script can be executed
+if ! bash -n "$FULL_SCRIPT_PATH" 2>/dev/null; then
+    echo "ERROR: Script has syntax errors"
+    bash -n "$FULL_SCRIPT_PATH"
+    exit 1
+fi
+
 set -e  # Exit on error
 
 # Configuration
@@ -14,6 +73,16 @@ TMP_DIR="$BASE_DIR/tmp"
 ADMIN_COMPONENT_DIR="$BASE_DIR/administrator/components/com_odoocontacts"
 SITE_COMPONENT_DIR="$BASE_DIR/components/com_odoocontacts"
 MEDIA_DIR="$BASE_DIR/media/com_odoocontacts"
+
+# Display script information
+echo "=========================================="
+echo "Joomla Component Installation Script"
+echo "=========================================="
+echo "Script location: $FULL_SCRIPT_PATH"
+echo "Script directory: $SCRIPT_DIR"
+echo "Current working directory: $(pwd)"
+echo "=========================================="
+echo ""
 
 # Colors for output
 RED='\033[0;31m'
