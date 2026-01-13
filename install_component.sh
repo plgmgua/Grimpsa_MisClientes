@@ -58,26 +58,55 @@ else
     print_info "Detected web server user: $WEB_USER"
 fi
 
+# Check if tmp directory exists
+if [ ! -d "$TMP_DIR" ]; then
+    print_error "TMP directory does not exist: $TMP_DIR"
+    exit 1
+fi
+
 # Find component directory in tmp
 print_info "Looking for component files in $TMP_DIR..."
 
+# List what's in tmp for debugging
+print_info "Contents of $TMP_DIR:"
+ls -la "$TMP_DIR" | head -20 || true
+echo ""
+
 # Check for common tmp extraction patterns
 COMPONENT_SOURCE=""
+
+# First, check if com_odoocontacts is directly in tmp
 if [ -d "$TMP_DIR/com_odoocontacts" ]; then
     COMPONENT_SOURCE="$TMP_DIR/com_odoocontacts"
-elif [ -d "$TMP_DIR/install_"*"/com_odoocontacts" ]; then
-    COMPONENT_SOURCE=$(find "$TMP_DIR" -type d -name "com_odoocontacts" -path "*/install_*/*" | head -1)
+    print_info "Found component in: $COMPONENT_SOURCE"
+# Check for install_* subdirectories
 elif [ -d "$TMP_DIR" ]; then
-    # Look for any com_odoocontacts directory
-    COMPONENT_SOURCE=$(find "$TMP_DIR" -type d -name "com_odoocontacts" | head -1)
+    # Look for any com_odoocontacts directory in install_* folders
+    FOUND=$(find "$TMP_DIR" -maxdepth 3 -type d -name "com_odoocontacts" 2>/dev/null | head -1)
+    if [ -n "$FOUND" ] && [ -d "$FOUND" ]; then
+        COMPONENT_SOURCE="$FOUND"
+        print_info "Found component in: $COMPONENT_SOURCE"
+    else
+        # Look for any directory with odoocontacts.xml
+        FOUND=$(find "$TMP_DIR" -maxdepth 3 -name "odoocontacts.xml" -type f 2>/dev/null | head -1)
+        if [ -n "$FOUND" ] && [ -f "$FOUND" ]; then
+            COMPONENT_SOURCE=$(dirname "$FOUND")
+            print_info "Found component manifest, using: $COMPONENT_SOURCE"
+        fi
+    fi
 fi
 
 if [ -z "$COMPONENT_SOURCE" ] || [ ! -d "$COMPONENT_SOURCE" ]; then
     print_error "Component directory not found in $TMP_DIR"
+    print_info ""
     print_info "Please ensure you have extracted the component zip file in the tmp directory"
+    print_info ""
     print_info "Expected locations:"
     print_info "  - $TMP_DIR/com_odoocontacts/"
     print_info "  - $TMP_DIR/install_*/com_odoocontacts/"
+    print_info ""
+    print_info "Current contents of $TMP_DIR:"
+    ls -la "$TMP_DIR" 2>/dev/null || print_error "Cannot list $TMP_DIR"
     exit 1
 fi
 
@@ -99,29 +128,53 @@ mkdir -p "$MEDIA_DIR"
 
 # Copy admin files
 if [ -d "$COMPONENT_SOURCE/admin" ]; then
-    print_info "Copying admin files..."
-    cp -r "$COMPONENT_SOURCE/admin"/* "$ADMIN_COMPONENT_DIR/"
-    print_info "Admin files copied"
+    print_info "Copying admin files from $COMPONENT_SOURCE/admin..."
+    if [ ! -d "$ADMIN_COMPONENT_DIR" ]; then
+        mkdir -p "$ADMIN_COMPONENT_DIR"
+    fi
+    cp -r "$COMPONENT_SOURCE/admin"/* "$ADMIN_COMPONENT_DIR/" 2>&1
+    if [ $? -eq 0 ]; then
+        print_info "Admin files copied successfully"
+    else
+        print_error "Failed to copy admin files"
+        exit 1
+    fi
 else
-    print_warning "Admin directory not found in source"
+    print_warning "Admin directory not found in source: $COMPONENT_SOURCE/admin"
 fi
 
 # Copy site files
 if [ -d "$COMPONENT_SOURCE/site" ]; then
-    print_info "Copying site files..."
-    cp -r "$COMPONENT_SOURCE/site"/* "$SITE_COMPONENT_DIR/"
-    print_info "Site files copied"
+    print_info "Copying site files from $COMPONENT_SOURCE/site..."
+    if [ ! -d "$SITE_COMPONENT_DIR" ]; then
+        mkdir -p "$SITE_COMPONENT_DIR"
+    fi
+    cp -r "$COMPONENT_SOURCE/site"/* "$SITE_COMPONENT_DIR/" 2>&1
+    if [ $? -eq 0 ]; then
+        print_info "Site files copied successfully"
+    else
+        print_error "Failed to copy site files"
+        exit 1
+    fi
 else
-    print_warning "Site directory not found in source"
+    print_warning "Site directory not found in source: $COMPONENT_SOURCE/site"
 fi
 
 # Copy media files
 if [ -d "$COMPONENT_SOURCE/media" ]; then
-    print_info "Copying media files..."
-    cp -r "$COMPONENT_SOURCE/media"/* "$MEDIA_DIR/"
-    print_info "Media files copied"
+    print_info "Copying media files from $COMPONENT_SOURCE/media..."
+    if [ ! -d "$MEDIA_DIR" ]; then
+        mkdir -p "$MEDIA_DIR"
+    fi
+    cp -r "$COMPONENT_SOURCE/media"/* "$MEDIA_DIR/" 2>&1
+    if [ $? -eq 0 ]; then
+        print_info "Media files copied successfully"
+    else
+        print_error "Failed to copy media files"
+        exit 1
+    fi
 else
-    print_warning "Media directory not found in source"
+    print_warning "Media directory not found in source: $COMPONENT_SOURCE/media"
 fi
 
 # Set ownership
