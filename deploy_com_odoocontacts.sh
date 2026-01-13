@@ -123,9 +123,17 @@ download_repository() {
         exit 1
     fi
     
+    # Debug: List what's in the repo to help diagnose
+    log "Contents of cloned repository:"
+    ls -la "$TEMP_DIR/repo" | head -20 | while read line; do
+        log "  $line"
+    done
+    
     # Verify component directory exists in repo
     if [ ! -d "$TEMP_DIR/repo/$COMPONENT_NAME" ]; then
         error "Component directory not found in repository: $COMPONENT_NAME"
+        error "Expected path: $TEMP_DIR/repo/$COMPONENT_NAME"
+        error "Please check the repository structure"
         exit 1
     fi
     
@@ -139,12 +147,23 @@ verify_downloaded_files() {
     local component_source="$repo_path/$COMPONENT_NAME"
     
     log "Verifying downloaded files..."
+    log "Repository path: $repo_path"
+    log "Component source path: $component_source"
+    
+    # Debug: List what's actually in the repo
+    if [ -d "$repo_path" ]; then
+        log "Contents of repository root:"
+        ls -la "$repo_path" | head -20 | while read line; do
+            log "  $line"
+        done
+    fi
     
     # Check if essential directories exist in the downloaded repository
     local missing_files=()
     
     if [ ! -d "$component_source" ]; then
         missing_files+=("$COMPONENT_NAME/")
+        log "Component directory not found at: $component_source"
     fi
     
     if [ ! -d "$component_source/admin" ]; then
