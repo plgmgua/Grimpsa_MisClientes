@@ -7,27 +7,47 @@
  * @license     GNU General Public License version 2 or later
  */
 
-defined('_JEXEC') or die;
-
-// Immediate logging - write to multiple locations as soon as script loads
-$installerLogLocations = [
-    (defined('JPATH_ADMINISTRATOR') ? JPATH_ADMINISTRATOR : __DIR__ . '/../../..') . '/logs/com_odoocontacts_install.log',
-    (defined('JPATH_ROOT') ? JPATH_ROOT : dirname(__DIR__, 3)) . '/com_odoocontacts_install.log',
+// CRITICAL: Log BEFORE _JEXEC check to catch if script is loaded at all
+// Write to multiple locations immediately
+$immediateLogMsg = date('Y-m-d H:i:s') . " [BEFORE_JEXEC] Script file loaded and executing\n";
+$immediateLogLocations = [
+    __DIR__ . '/../../../logs/com_odoocontacts_install.log',
+    __DIR__ . '/../../../../com_odoocontacts_install.log',
     sys_get_temp_dir() . '/com_odoocontacts_install.log',
-    '/tmp/com_odoocontacts_install.log'
+    '/tmp/com_odoocontacts_install.log',
+    '/var/tmp/com_odoocontacts_install.log'
 ];
 
-$initialLog = date('Y-m-d H:i:s') . " [SCRIPT_LOADED] Installer script file loaded\n";
-foreach ($installerLogLocations as $logPath) {
-    $logDir = dirname($logPath);
-    if (!is_dir($logDir)) {
-        @mkdir($logDir, 0755, true);
-    }
-    if (is_writable($logDir) || is_writable($logPath)) {
-        @file_put_contents($logPath, $initialLog, FILE_APPEND | LOCK_EX);
+foreach ($immediateLogLocations as $logPath) {
+    try {
+        $logDir = dirname($logPath);
+        if (!is_dir($logDir)) {
+            @mkdir($logDir, 0755, true);
+        }
+        if (is_dir($logDir) && (is_writable($logDir) || is_writable($logPath))) {
+            @file_put_contents($logPath, $immediateLogMsg, FILE_APPEND | LOCK_EX);
+        }
+    } catch (Exception $e) {
+        // Ignore errors, try next location
     }
 }
-error_log("com_odoocontacts installer script loaded");
+@error_log("com_odoocontacts installer script loaded - BEFORE JEXEC");
+
+defined('_JEXEC') or die;
+
+// Log after JEXEC check
+$afterJexecLog = date('Y-m-d H:i:s') . " [AFTER_JEXEC] JEXEC defined, continuing\n";
+foreach ($immediateLogLocations as $logPath) {
+    try {
+        $logDir = dirname($logPath);
+        if (is_dir($logDir) && (is_writable($logDir) || is_writable($logPath))) {
+            @file_put_contents($logPath, $afterJexecLog, FILE_APPEND | LOCK_EX);
+        }
+    } catch (Exception $e) {
+        // Ignore
+    }
+}
+@error_log("com_odoocontacts installer script - AFTER JEXEC");
 
 use Joomla\CMS\Factory;
 use Joomla\CMS\Installer\InstallerScript;
