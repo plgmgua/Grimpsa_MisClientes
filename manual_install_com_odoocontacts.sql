@@ -135,13 +135,14 @@ SET
 WHERE `id` = @component_asset_id AND `parent_id` != @root_id;
 
 -- Step 6: Verify installation
+-- Note: Joomla 5 doesn't have a 'version' column - version is in manifest_cache JSON
 SELECT 
     'Component Extension' AS 'Check',
     `extension_id` AS 'ID',
     `name` AS 'Name',
     `element` AS 'Element',
     `enabled` AS 'Enabled',
-    `version` AS 'Version'
+    `type` AS 'Type'
 FROM `joomla_extensions`
 WHERE `element` = 'com_odoocontacts' AND `type` = 'component';
 
