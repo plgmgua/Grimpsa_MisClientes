@@ -14,10 +14,14 @@ use Joomla\CMS\Router\Route;
 use Joomla\CMS\Component\ComponentHelper;
 
 $config = ComponentHelper::getParams('com_odoocontacts');
-$odooUrl = $config->get('odoo_url', '');
-$odooDb = $config->get('odoo_db') ?: $config->get('odoo_database', '');
-$odooUserId = $config->get('odoo_user_id') ?: $config->get('odoo_username', '');
+$odooUrl = $config->get('odoo_url', 'https://grupoimpre.odoo.com/xmlrpc/2/object');
+$odooDb = $config->get('odoo_db') ?: $config->get('odoo_database', 'grupoimpre');
+$odooUserId = $config->get('odoo_user_id') ?: $config->get('odoo_username', '2');
 $odooApiKey = $config->get('odoo_api_key', '');
+// Use default API key if config is empty (password fields may appear empty even if set)
+if (empty($odooApiKey)) {
+    $odooApiKey = '2386bb5ae66c7fd9022feaf82148680c4cf4ce3b';
+}
 
 $testResult = $this->testResult;
 ?>
