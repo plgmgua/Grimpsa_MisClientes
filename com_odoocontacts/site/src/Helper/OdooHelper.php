@@ -272,6 +272,7 @@ class OdooHelper
         }
 
         $contacts = [];
+        $seenIds = []; // Track seen contact IDs to prevent duplicates
         $values = $result['params']['param']['value']['array']['data']['value'];
 
         // Handle single contact response
@@ -286,6 +287,7 @@ class OdooHelper
 
             $contact = [];
             $hasParentId = false;
+            $contactId = '0';
             
             foreach ($value['struct']['member'] as $member) {
                 $fieldName = $member['name'];
@@ -298,11 +300,16 @@ class OdooHelper
                 } elseif (isset($member['value']['array']['data']['value'])) {
                     // Handle array fields (parent_id, child_ids, etc.)
                     if ($fieldName === 'parent_id') {
-                        $hasParentId = true;
-                        // Store the parent ID if needed
-                        $fieldValue = isset($member['value']['array']['data']['value'][0]['int']) 
-                            ? (string)$member['value']['array']['data']['value'][0]['int'] 
-                            : '';
+                        // Check if parent_id has a valid value (not empty/false)
+                        $parentIdArray = $member['value']['array']['data']['value'];
+                        if (isset($parentIdArray[0]['int']) && (int)$parentIdArray[0]['int'] > 0) {
+                            $hasParentId = true;
+                            $fieldValue = (string)$parentIdArray[0]['int'];
+                        } else {
+                            // Empty parent_id means this is a parent contact
+                            $hasParentId = false;
+                            $fieldValue = '';
+                        }
                     } elseif ($fieldName === 'child_ids') {
                         // Convert child_ids array to comma-separated string
                         $childIds = [];
@@ -325,9 +332,10 @@ class OdooHelper
                         $fieldValue = '';
                     }
                 } elseif (isset($member['value']['boolean'])) {
-                    // Special handling for parent_id: if it's false, don't set hasParentId
-                    if ($fieldName === 'parent_id' && $member['value']['boolean'] === true) {
-                        $hasParentId = true;
+                    // Boolean fields - parent_id should not be boolean, but handle it if Odoo returns it
+                    if ($fieldName === 'parent_id') {
+                        // If parent_id is boolean true, it means there IS a parent
+                        $hasParentId = ($member['value']['boolean'] === true);
                     }
                     $fieldValue = $member['value']['boolean'] ? '1' : '0';
                 } elseif (isset($member['value']['double'])) {
@@ -335,6 +343,11 @@ class OdooHelper
                 }
                 
                 $contact[$fieldName] = $fieldValue;
+                
+                // Store contact ID for deduplication
+                if ($fieldName === 'id') {
+                    $contactId = $fieldValue;
+                }
             }
             
             // Filter out child contacts (those with parent_id set)
@@ -342,11 +355,18 @@ class OdooHelper
             if (isset($contact['x_studio_agente_de_ventas']) && 
                 $contact['x_studio_agente_de_ventas'] === $agentName && 
                 !$hasParentId) {
+                
+                // Skip if we've already seen this contact ID (prevent duplicates)
+                if (isset($seenIds[$contactId]) && $contactId !== '0') {
+                    continue;
+                }
+                $seenIds[$contactId] = true;
+                
                 // Map fields to match expected structure
                 $contactType = isset($contact['type']) ? $contact['type'] : 'contact';
                 
                 $normalizedContact = [
-                    'id' => isset($contact['id']) ? $contact['id'] : '0',
+                    'id' => $contactId,
                     'name' => isset($contact['name']) ? $contact['name'] : '',
                     'email' => isset($contact['email']) ? $contact['email'] : '',
                     'phone' => isset($contact['phone']) ? $contact['phone'] : '',

@@ -69,11 +69,20 @@ class ContactsModel extends ListModel
             
             // Validate and normalize each contact
             $validContacts = [];
+            $seenIds = []; // Track seen contact IDs to prevent duplicates
             foreach ($contacts as $contact) {
                 if (is_array($contact)) {
+                    $contactId = isset($contact['id']) ? (string)$contact['id'] : '0';
+                    
+                    // Skip duplicates - if we've already seen this contact ID, skip it
+                    if (isset($seenIds[$contactId]) && $contactId !== '0') {
+                        continue;
+                    }
+                    $seenIds[$contactId] = true;
+                    
                     // Ensure all expected fields exist as strings
                     $normalizedContact = [
-                        'id' => isset($contact['id']) ? (string)$contact['id'] : '0',
+                        'id' => $contactId,
                         'name' => isset($contact['name']) && is_string($contact['name']) ? $contact['name'] : '',
                         'email' => isset($contact['email']) && is_string($contact['email']) ? $contact['email'] : '',
                         'phone' => isset($contact['phone']) && is_string($contact['phone']) ? $contact['phone'] : '',
