@@ -327,22 +327,21 @@ function safeGet($array, $key, $default = '') {
                     
                     <!-- Client Information (Read-only) -->
                     <div class="card mb-3">
-                        <div class="card-header">
-                            <h6 class="mb-0"><i class="fas fa-user"></i> Información del Cliente</h6>
-                        </div>
-                        <div class="card-body">
-                            <div class="row">
-                                <div class="col-md-6">
+                        <div class="card-body" style="padding: 0.5rem 1rem;">
+                            <div class="row mb-1">
+                                <div class="col-3">
                                     <strong>Cliente:</strong>
-                                    <p id="otClientName" class="mb-2"></p>
                                 </div>
-                                <div class="col-md-6">
+                                <div class="col-9">
+                                    <span id="otClientName"></span>
+                                </div>
+                            </div>
+                            <div class="row mb-0">
+                                <div class="col-3">
                                     <strong>NIT:</strong>
-                                    <p id="otClientVat" class="mb-2"></p>
                                 </div>
-                                <div class="col-md-12">
-                                    <strong>Agente de Ventas:</strong>
-                                    <p id="otAgentName" class="mb-0"><?php echo htmlspecialchars($user->name); ?></p>
+                                <div class="col-9">
+                                    <span id="otClientVat"></span>
                                 </div>
                             </div>
                         </div>
@@ -556,6 +555,7 @@ function safeGet($array, $key, $default = '') {
                 <input type="hidden" id="otSelectedCity" value="" />
                 <input type="hidden" id="otSelectedContactName" value="" />
                 <input type="hidden" id="otSelectedContactPhone" value="" />
+                <input type="hidden" id="otAgentName" value="<?php echo htmlspecialchars($user->name); ?>" />
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
@@ -2221,7 +2221,7 @@ function submitOT() {
     var deliveryStreet = document.getElementById('otSelectedStreet').value;
     var deliveryCity = document.getElementById('otSelectedCity').value;
     var instructions = document.getElementById('otDeliveryInstructions').value;
-    var agentName = document.getElementById('otAgentName').textContent;
+    var agentName = document.getElementById('otAgentName').value;
     var deliveryType = document.querySelector('input[name="otDeliveryType"]:checked').value;
     
     // Merge street and city into single delivery address
@@ -2252,7 +2252,7 @@ function saveDeliveryAddressNow() {
     var addressName = document.getElementById('otManualAddressName').value.trim();
     var street = document.getElementById('otManualStreet').value.trim();
     var city = document.getElementById('otManualCity').value.trim();
-    var agentName = document.getElementById('otAgentName').textContent;
+    var agentName = document.getElementById('otAgentName').value;
     
     // Validate inputs
     if (!addressName || !street || !city) {
@@ -2330,7 +2330,7 @@ function saveContactNow() {
     var clientId = document.getElementById('otClientId').value;
     var contactName = document.getElementById('otManualContactName').value.trim();
     var contactPhone = document.getElementById('otManualContactPhone').value.trim();
-    var agentName = document.getElementById('otAgentName').textContent;
+    var agentName = document.getElementById('otAgentName').value;
     
     // Validate inputs
     if (!contactName || !contactPhone) {
