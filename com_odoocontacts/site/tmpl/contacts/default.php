@@ -372,27 +372,18 @@ function safeGet($array, $key, $default = '') {
                     <div id="otDeliveryAddressContainer">
                         <!-- Delivery Address Selection -->
                         <div class="mb-3">
-                            <label for="otDeliveryAddress" class="form-label">
+                            <label class="form-label">
                                 <i class="fas fa-map-marker-alt"></i> Dirección de Entrega
                             </label>
-                            <select id="otDeliveryAddress" class="form-select">
-                                <option value="">Seleccione una dirección...</option>
-                            </select>
+                            <div id="otDeliveryAddressList" class="list-group" style="max-height: 200px; overflow-y: auto;">
+                                <div class="text-center text-muted p-3">
+                                    Cargando direcciones...
+                                </div>
+                            </div>
                             <div class="form-text">
                                 Seleccione una dirección existente o ingrese una nueva abajo.
                             </div>
                         </div>
-                    
-                    <!-- Address Preview -->
-                    <div id="otAddressPreview" class="card mb-3" style="display: none;">
-                        <div class="card-header bg-light">
-                            <h6 class="mb-0"><i class="fas fa-location-arrow"></i> Dirección Seleccionada</h6>
-                        </div>
-                        <div class="card-body">
-                            <p class="mb-1"><strong>Calle:</strong> <span id="otPreviewStreet"></span></p>
-                            <p class="mb-0"><strong>Ciudad:</strong> <span id="otPreviewCity"></span></p>
-                        </div>
-                    </div>
                     
                     <!-- OR Divider -->
                     <div class="text-center mb-3">
@@ -1662,14 +1653,26 @@ function openOTModal(clientId, clientName, clientVat) {
     document.getElementById('otDeliveryAddressContainer').style.display = 'block';
     
     // Clear previous selections - delivery address
-    document.getElementById('otDeliveryAddress').innerHTML = '<option value="">Cargando direcciones...</option>';
+    document.getElementById('otDeliveryAddressList').innerHTML = '<div class="text-center text-muted p-3">Cargando direcciones...</div>';
     document.getElementById('otManualAddressName').value = '';
     document.getElementById('otManualStreet').value = '';
     document.getElementById('otManualCity').value = '';
     document.getElementById('otSaveAddressToOdoo').checked = false;
     document.getElementById('otDeliveryInstructions').value = '';
-    document.getElementById('otAddressPreview').style.display = 'none';
     document.getElementById('otSaveAddressButtonContainer').style.display = 'none';
+    
+    // Clear selected address data
+    document.getElementById('otSelectedStreet').value = '';
+    document.getElementById('otSelectedCity').value = '';
+    
+    // Clear radio button selections
+    var radios = document.querySelectorAll('input[name="otDeliveryAddress"]');
+    radios.forEach(function(radio) {
+        radio.checked = false;
+        if (radio.closest('.list-group-item')) {
+            radio.closest('.list-group-item').classList.remove('active');
+        }
+    });
     
     // Clear previous selections - contact
     document.getElementById('otContactSelect').innerHTML = '<option value="">Seleccione un contacto...</option>';
@@ -1741,7 +1744,7 @@ function loadCreditLimit(clientId) {
 // Load child contacts for the selected client
 function loadChildContacts(clientId, parentName) {
     // Make AJAX call to get child contacts and parent contact info
-    Promise.all([
+    return Promise.all([
         fetch('<?php echo Route::_("index.php?option=com_odoocontacts&task=contact.getChildContacts&format=json"); ?>&id=' + clientId),
         fetch('<?php echo Route::_("index.php?option=com_odoocontacts&task=contact.getParentContact&format=json"); ?>&id=' + clientId)
     ]).then(responses => Promise.all(responses.map(r => r.json())))
@@ -1756,22 +1759,24 @@ function loadChildContacts(clientId, parentName) {
           
           populateDeliveryAddresses(parentContact);
           populateContactPersons(parentContact);
+          return data;
       })
       .catch(error => {
           if (otDebugMode) console.error('Error loading contacts:', error);
           otChildContacts = [];
           populateDeliveryAddresses(null);
           populateContactPersons(null);
+          throw error;
       });
 }
 
-// Populate delivery address dropdown
+// Populate delivery address list with checkboxes
 function populateDeliveryAddresses(parentContact) {
-    var select = document.getElementById('otDeliveryAddress');
-    select.innerHTML = '<option value="">Seleccione una dirección...</option>';
+    var listContainer = document.getElementById('otDeliveryAddressList');
+    listContainer.innerHTML = '';
     
     if (otChildContacts.length === 0) {
-        select.innerHTML = '<option value="">No hay direcciones disponibles - use campos manuales abajo</option>';
+        listContainer.innerHTML = '<div class="text-center text-muted p-3">No hay direcciones disponibles - use campos manuales abajo</div>';
         return;
     }
     
@@ -1784,61 +1789,89 @@ function populateDeliveryAddresses(parentContact) {
     
     // Add delivery addresses
     if (deliveryAddresses.length > 0) {
-        var deliveryGroup = document.createElement('optgroup');
-        deliveryGroup.label = 'Direcciones de Entrega';
+        var groupLabel = document.createElement('div');
+        groupLabel.className = 'list-group-item bg-light fw-bold';
+        groupLabel.textContent = 'Direcciones de Entrega';
+        listContainer.appendChild(groupLabel);
+        
         deliveryAddresses.forEach(function(contact) {
-            var option = document.createElement('option');
-            option.value = contact.id;
-            option.textContent = contact.name + ' - ' + (contact.street || 'Sin dirección');
-            option.dataset.street = contact.street || '';
-            option.dataset.city = contact.city || '';
-            deliveryGroup.appendChild(option);
+            var listItem = createAddressListItem(contact, 'otDeliveryAddress');
+            listContainer.appendChild(listItem);
         });
-        select.appendChild(deliveryGroup);
         hasAnyAddresses = true;
     }
     
     // Add invoice addresses
     if (invoiceAddresses.length > 0) {
-        var invoiceGroup = document.createElement('optgroup');
-        invoiceGroup.label = 'Direcciones de Facturación';
+        var groupLabel = document.createElement('div');
+        groupLabel.className = 'list-group-item bg-light fw-bold';
+        groupLabel.textContent = 'Direcciones de Facturación';
+        listContainer.appendChild(groupLabel);
+        
         invoiceAddresses.forEach(function(contact) {
-            var option = document.createElement('option');
-            option.value = contact.id;
-            option.textContent = contact.name + ' - ' + (contact.street || 'Sin dirección');
-            option.dataset.street = contact.street || '';
-            option.dataset.city = contact.city || '';
-            invoiceGroup.appendChild(option);
+            var listItem = createAddressListItem(contact, 'otDeliveryAddress');
+            listContainer.appendChild(listItem);
         });
-        select.appendChild(invoiceGroup);
         hasAnyAddresses = true;
     }
     
-    // Add other addresses (use contact name as the type label)
+    // Add other addresses
     if (otherAddresses.length > 0) {
-        var otherGroup = document.createElement('optgroup');
-        otherGroup.label = 'Otras Direcciones';
+        var groupLabel = document.createElement('div');
+        groupLabel.className = 'list-group-item bg-light fw-bold';
+        groupLabel.textContent = 'Otras Direcciones';
+        listContainer.appendChild(groupLabel);
+        
         otherAddresses.forEach(function(contact) {
-            var option = document.createElement('option');
-            option.value = contact.id;
-            // Use the contact name as the primary identifier since it describes the address type
-            option.textContent = contact.name + (contact.street ? ' - ' + contact.street : '');
-            option.dataset.street = contact.street || '';
-            option.dataset.city = contact.city || '';
-            otherGroup.appendChild(option);
+            var listItem = createAddressListItem(contact, 'otDeliveryAddress');
+            listContainer.appendChild(listItem);
         });
-        select.appendChild(otherGroup);
         hasAnyAddresses = true;
     }
     
     if (!hasAnyAddresses) {
-        select.innerHTML = '<option value="">No hay direcciones disponibles - use campos manuales abajo</option>';
+        listContainer.innerHTML = '<div class="text-center text-muted p-3">No hay direcciones disponibles - use campos manuales abajo</div>';
     }
+}
+
+// Create a list item with radio button for address selection
+function createAddressListItem(contact, name) {
+    var listItem = document.createElement('label');
+    listItem.className = 'list-group-item d-flex align-items-start';
+    listItem.style.cursor = 'pointer';
     
-    // Handle address selection - clear manual inputs when dropdown is used
-    select.addEventListener('change', function() {
-        var selectedOption = this.options[this.selectedIndex];
-        if (selectedOption.value) {
+    var radio = document.createElement('input');
+    radio.type = 'radio';
+    radio.name = name;
+    radio.value = contact.id;
+    radio.className = 'form-check-input me-2 mt-1';
+    radio.dataset.street = contact.street || '';
+    radio.dataset.city = contact.city || '';
+    
+    var content = document.createElement('div');
+    content.className = 'flex-grow-1';
+    
+    var nameDiv = document.createElement('div');
+    nameDiv.className = 'fw-bold';
+    nameDiv.textContent = contact.name;
+    
+    var addressDiv = document.createElement('div');
+    addressDiv.className = 'text-muted small';
+    var addressText = contact.street || 'Sin dirección';
+    if (contact.city) {
+        addressText += ', ' + contact.city;
+    }
+    addressDiv.textContent = addressText;
+    
+    content.appendChild(nameDiv);
+    content.appendChild(addressDiv);
+    
+    listItem.appendChild(radio);
+    listItem.appendChild(content);
+    
+    // Handle selection change
+    radio.addEventListener('change', function() {
+        if (this.checked) {
             // Clear manual inputs
             document.getElementById('otManualAddressName').value = '';
             document.getElementById('otManualStreet').value = '';
@@ -1846,15 +1879,19 @@ function populateDeliveryAddresses(parentContact) {
             document.getElementById('otSaveAddressToOdoo').checked = false;
             
             // Set selected address data
-            document.getElementById('otSelectedStreet').value = selectedOption.dataset.street;
-            document.getElementById('otSelectedCity').value = selectedOption.dataset.city;
-            document.getElementById('otPreviewStreet').textContent = selectedOption.dataset.street || 'N/A';
-            document.getElementById('otPreviewCity').textContent = selectedOption.dataset.city || 'N/A';
-            document.getElementById('otAddressPreview').style.display = 'block';
-        } else {
-            document.getElementById('otAddressPreview').style.display = 'none';
+            document.getElementById('otSelectedStreet').value = this.dataset.street;
+            document.getElementById('otSelectedCity').value = this.dataset.city;
+            
+            // Remove selection from other radio buttons
+            var allRadios = document.querySelectorAll('input[name="' + name + '"]');
+            allRadios.forEach(function(r) {
+                r.closest('.list-group-item').classList.remove('active');
+            });
+            this.closest('.list-group-item').classList.add('active');
         }
     });
+    
+    return listItem;
 }
 
 // Populate contact persons dropdown (type = 'contact' + parent)
@@ -1950,8 +1987,14 @@ document.addEventListener('DOMContentLoaded', function() {
         if (field) {
             field.addEventListener('input', function() {
                 if (this.value) {
-                    document.getElementById('otDeliveryAddress').value = '';
-                    document.getElementById('otAddressPreview').style.display = 'none';
+                    // Clear radio button selection
+                    var selectedRadio = document.querySelector('input[name="otDeliveryAddress"]:checked');
+                    if (selectedRadio) {
+                        selectedRadio.checked = false;
+                        selectedRadio.closest('.list-group-item').classList.remove('active');
+                    }
+                    document.getElementById('otSelectedStreet').value = '';
+                    document.getElementById('otSelectedCity').value = '';
                 }
                 // Show/hide save button based on checkbox and manual inputs
                 toggleSaveAddressButton();
@@ -2128,14 +2171,14 @@ function goToStep2() {
         document.getElementById('otSelectedCity').value = '';
     } else {
         // Delivery to address - validate address selection
-        var deliverySelect = document.getElementById('otDeliveryAddress');
+        var selectedRadio = document.querySelector('input[name="otDeliveryAddress"]:checked');
         var manualAddressName = document.getElementById('otManualAddressName').value.trim();
         var manualStreet = document.getElementById('otManualStreet').value.trim();
         var manualCity = document.getElementById('otManualCity').value.trim();
         
-        // Validate: either dropdown OR manual inputs
-        if (deliverySelect.value) {
-            // Using dropdown
+        // Validate: either radio selection OR manual inputs
+        if (selectedRadio) {
+            // Using selected address from list
             deliveryStreet = document.getElementById('otSelectedStreet').value;
             deliveryCity = document.getElementById('otSelectedCity').value;
         } else if (manualAddressName && manualStreet && manualCity) {
@@ -2282,31 +2325,35 @@ function saveDeliveryAddressNow() {
           if (data.success) {
               showNotification('Dirección guardada exitosamente', 'success');
               
-              // Add new address to dropdown
-              var select = document.getElementById('otDeliveryAddress');
-              var option = document.createElement('option');
-              option.value = data.address_id || 'new';
-              option.textContent = addressName + ' - ' + street;
-              option.dataset.street = street;
-              option.dataset.city = city;
-              option.selected = true;
-              select.appendChild(option);
+              // Reload addresses to include the new one
+              var clientId = document.getElementById('otClientId').value;
+              var clientName = document.getElementById('otClientName').textContent;
               
-              // Set hidden fields
-              document.getElementById('otSelectedStreet').value = street;
-              document.getElementById('otSelectedCity').value = city;
-              
-              // Show preview
-              document.getElementById('otPreviewStreet').textContent = street;
-              document.getElementById('otPreviewCity').textContent = city;
-              document.getElementById('otAddressPreview').style.display = 'block';
-              
-              // Clear manual inputs and hide button
+              // Clear manual inputs and hide button first
               document.getElementById('otManualAddressName').value = '';
               document.getElementById('otManualStreet').value = '';
               document.getElementById('otManualCity').value = '';
               document.getElementById('otSaveAddressToOdoo').checked = false;
               document.getElementById('otSaveAddressButtonContainer').style.display = 'none';
+              
+              // Reload child contacts which will repopulate the address list
+              loadChildContacts(clientId, clientName).then(function() {
+                  // After reloading, try to select the newly created address
+                  setTimeout(function() {
+                      var newAddressRadio = document.querySelector('input[name="otDeliveryAddress"][value="' + (data.address_id || 'new') + '"]');
+                      if (newAddressRadio) {
+                          newAddressRadio.checked = true;
+                          newAddressRadio.dispatchEvent(new Event('change'));
+                      } else {
+                          // If we can't find it by ID, select the first delivery address
+                          var firstDeliveryRadio = document.querySelector('input[name="otDeliveryAddress"]');
+                          if (firstDeliveryRadio) {
+                              firstDeliveryRadio.checked = true;
+                              firstDeliveryRadio.dispatchEvent(new Event('change'));
+                          }
+                      }
+                  }, 100);
+              });
           } else {
               showNotification('Error al guardar: ' + (data.message || 'Error desconocido') + '. Por favor contacte a soporte.', 'danger');
           }
