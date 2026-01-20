@@ -348,6 +348,46 @@ class ContactController extends FormController
     }
 
     /**
+     * Method to get credit limit for a client (AJAX)
+     *
+     * @return  void
+     */
+    public function getCreditLimit()
+    {
+        $user = Factory::getUser();
+        
+        if ($user->guest) {
+            echo json_encode(['success' => false, 'message' => 'Unauthorized']);
+            $this->app->close();
+        }
+
+        $clientId = $this->input->getInt('id', 0);
+        
+        if ($clientId <= 0) {
+            echo json_encode(['success' => false, 'message' => 'Invalid client ID']);
+            $this->app->close();
+        }
+
+        try {
+            $helper = new \Grimpsa\Component\OdooContacts\Site\Helper\OdooHelper();
+            $creditLimit = $helper->getCreditLimit($clientId);
+            
+            echo json_encode([
+                'success' => true,
+                'credit_limit' => $creditLimit !== null ? $creditLimit : null
+            ]);
+        } catch (Exception $e) {
+            echo json_encode([
+                'success' => false,
+                'message' => $e->getMessage(),
+                'credit_limit' => null
+            ]);
+        }
+        
+        $this->app->close();
+    }
+
+    /**
      * Method to save delivery address asynchronously (AJAX)
      *
      * @return  void

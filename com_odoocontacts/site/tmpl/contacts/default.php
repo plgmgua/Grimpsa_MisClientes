@@ -311,6 +311,13 @@ function safeGet($array, $key, $default = '') {
                     </div>
                 </div>
                 
+                <!-- Credit Limit Banner -->
+                <div id="otCreditLimitBanner" class="alert alert-info mb-3" style="display: none;">
+                    <i class="fas fa-credit-card"></i>
+                    <strong>Límite de Crédito:</strong> 
+                    <span id="otCreditLimitAmount">-</span>
+                </div>
+                
                 <!-- Step 1: Delivery Information -->
                 <div id="otStep1" style="display: block;">
                     <div class="alert alert-info">
@@ -1685,9 +1692,50 @@ function openOTModal(clientId, clientName, clientVat) {
     // Load child contacts and parent contact via AJAX
     loadChildContacts(clientId, clientName);
     
+    // Load credit limit
+    loadCreditLimit(clientId);
+    
     // Show modal
     var otModal = new bootstrap.Modal(document.getElementById('otModal'));
     otModal.show();
+}
+
+// Load credit limit for the selected client
+function loadCreditLimit(clientId) {
+    // Hide banner initially
+    var banner = document.getElementById('otCreditLimitBanner');
+    var amountSpan = document.getElementById('otCreditLimitAmount');
+    banner.style.display = 'none';
+    
+    // Make AJAX call to get credit limit
+    fetch('<?php echo Route::_("index.php?option=com_odoocontacts&task=contact.getCreditLimit&format=json"); ?>&id=' + clientId)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success && data.credit_limit !== null && data.credit_limit !== undefined) {
+                // Format the credit limit as currency
+                var creditLimit = parseFloat(data.credit_limit);
+                if (!isNaN(creditLimit) && creditLimit >= 0) {
+                    // Format as currency (Q for Quetzales, or adjust as needed)
+                    var formattedAmount = new Intl.NumberFormat('es-GT', {
+                        style: 'currency',
+                        currency: 'GTQ',
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2
+                    }).format(creditLimit);
+                    
+                    amountSpan.textContent = formattedAmount;
+                    banner.style.display = 'block';
+                } else {
+                    banner.style.display = 'none';
+                }
+            } else {
+                banner.style.display = 'none';
+            }
+        })
+        .catch(error => {
+            if (otDebugMode) console.error('Error loading credit limit:', error);
+            banner.style.display = 'none';
+        });
 }
 
 // Load child contacts for the selected client

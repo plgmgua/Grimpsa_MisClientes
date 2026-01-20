@@ -1201,6 +1201,135 @@ class OdooHelper
     }
 
     /**
+     * Get credit limit for a client
+     *
+     * @param   integer  $clientId  The client ID
+     *
+     * @return  float|null  The credit limit or null if not found
+     */
+    public function getCreditLimit($clientId)
+    {
+        if ($clientId <= 0) {
+            return null;
+        }
+
+        // Get configuration values
+        $odooDb = $this->config->get('odoo_db', 'grupoimpre');
+        $odooUserId = $this->config->get('odoo_user_id', '2');
+        $odooApiKey = $this->config->get('odoo_api_key', '2386bb5ae66c7fd9022feaf82148680c4cf4ce3b');
+
+        // Build XML payload to get credit_limit field using search_read (consistent with other methods)
+        $xmlPayload = '<?xml version="1.0"?>
+<methodCall>
+   <methodName>execute_kw</methodName>
+   <params>
+      <param>
+         <value><string>' . htmlspecialchars($odooDb, ENT_XML1, 'UTF-8') . '</string></value>
+      </param>
+      <param>
+         <value><int>' . (int)$odooUserId . '</int></value>
+      </param>
+      <param>
+         <value><string>' . htmlspecialchars($odooApiKey, ENT_XML1, 'UTF-8') . '</string></value>
+      </param>
+      <param>
+         <value><string>res.partner</string></value>
+      </param>
+      <param>
+         <value><string>search_read</string></value>
+      </param>
+      <param>
+         <value>
+            <array>
+               <data>
+                  <value>
+                     <array>
+                        <data>
+                           <value>
+                              <array>
+                                 <data>
+                                    <value><string>id</string></value>
+                                    <value><string>=</string></value>
+                                    <value><int>' . (int)$clientId . '</int></value>
+                                 </data>
+                              </array>
+                           </value>
+                        </data>
+                     </array>
+                  </value>
+               </data>
+            </array>
+         </value>
+      </param>
+      <param>
+         <value>
+            <struct>
+               <member>
+                  <name>fields</name>
+                  <value>
+                     <array>
+                        <data>
+                           <value><string>credit_limit</string></value>
+                        </data>
+                     </array>
+                  </value>
+               </member>
+            </struct>
+         </value>
+      </param>
+   </params>
+</methodCall>';
+
+        $result = $this->executeOdooCall($xmlPayload);
+        
+        if (!$result) {
+            return null;
+        }
+
+        // Parse the response to extract credit_limit (using same pattern as parseContactsResponse)
+        if (!isset($result['params']['param']['value']['array']['data']['value'])) {
+            return null;
+        }
+
+        $values = $result['params']['param']['value']['array']['data']['value'];
+        
+        // Handle single result
+        if (isset($values['struct'])) {
+            $values = [$values];
+        }
+        
+        foreach ($values as $value) {
+            if (!isset($value['struct']['member'])) {
+                continue;
+            }
+            
+            foreach ($value['struct']['member'] as $member) {
+                if ($member['name'] === 'credit_limit') {
+                    // Handle different number formats
+                    if (isset($member['value']['double'])) {
+                        return (float)$member['value']['double'];
+                    } elseif (isset($member['value']['int'])) {
+                        return (float)$member['value']['int'];
+                    } elseif (isset($member['value']['string'])) {
+                        $creditLimit = trim($member['value']['string']);
+                        if ($creditLimit === '' || $creditLimit === 'False' || $creditLimit === 'false') {
+                            return null;
+                        }
+                        $creditLimit = (float)$creditLimit;
+                        // Return 0 if explicitly set to 0, null if invalid
+                        return $creditLimit >= 0 ? $creditLimit : null;
+                    } elseif (isset($member['value']['boolean']) && $member['value']['boolean'] === false) {
+                        // Handle False boolean value (Odoo sometimes returns False for empty fields)
+                        return null;
+                    }
+                }
+            }
+        }
+
+        return null;
+    }
+
+    /**
      * Test the Odoo connection
      *
      * @return  array  Array with 'success' (boolean) and 'message' (string)
