@@ -381,17 +381,19 @@ function safeGet($array, $key, $default = '') {
                                 </div>
                             </div>
                             <div class="form-text">
-                                Seleccione una dirección existente o ingrese una nueva abajo.
+                                Seleccione una dirección existente o cree una nueva.
                             </div>
                         </div>
                     
-                    <!-- OR Divider -->
+                    <!-- Button to show new address form -->
                     <div class="text-center mb-3">
-                        <span class="badge bg-secondary">O</span>
+                        <button type="button" class="btn btn-outline-primary btn-sm" id="otShowNewAddressBtn" onclick="toggleNewAddressForm()">
+                            <i class="fas fa-plus"></i> Crear una nueva dirección de entrega
+                        </button>
                     </div>
                     
                     <!-- Manual Delivery Address Input -->
-                    <div class="card mb-3">
+                    <div id="otNewAddressForm" class="card mb-3" style="display: none;">
                         <div class="card-header bg-light">
                             <h6 class="mb-0"><i class="fas fa-map-marker-alt"></i> Ingresar Nueva Dirección de Entrega</h6>
                         </div>
@@ -1661,6 +1663,13 @@ function openOTModal(clientId, clientName, clientVat) {
     document.getElementById('otDeliveryInstructions').value = '';
     document.getElementById('otSaveAddressButtonContainer').style.display = 'none';
     
+    // Hide new address form and reset button
+    document.getElementById('otNewAddressForm').style.display = 'none';
+    var showBtn = document.getElementById('otShowNewAddressBtn');
+    showBtn.innerHTML = '<i class="fas fa-plus"></i> Crear una nueva dirección de entrega';
+    showBtn.classList.remove('btn-outline-secondary');
+    showBtn.classList.add('btn-outline-primary');
+    
     // Clear selected address data
     document.getElementById('otSelectedStreet').value = '';
     document.getElementById('otSelectedCity').value = '';
@@ -1791,6 +1800,40 @@ function populateDeliveryAddresses(parentContact) {
         });
     } else {
         listContainer.innerHTML = '<div class="text-center text-muted p-3">No hay direcciones de entrega disponibles - use campos manuales abajo</div>';
+    }
+}
+
+// Toggle new address form visibility
+function toggleNewAddressForm() {
+    var form = document.getElementById('otNewAddressForm');
+    var button = document.getElementById('otShowNewAddressBtn');
+    
+    if (form.style.display === 'none') {
+        form.style.display = 'block';
+        button.innerHTML = '<i class="fas fa-times"></i> Cancelar';
+        button.classList.remove('btn-outline-primary');
+        button.classList.add('btn-outline-secondary');
+    } else {
+        form.style.display = 'none';
+        button.innerHTML = '<i class="fas fa-plus"></i> Crear una nueva dirección de entrega';
+        button.classList.remove('btn-outline-secondary');
+        button.classList.add('btn-outline-primary');
+        
+        // Clear form fields when hiding
+        document.getElementById('otManualAddressName').value = '';
+        document.getElementById('otManualStreet').value = '';
+        document.getElementById('otManualCity').value = '';
+        document.getElementById('otSaveAddressToOdoo').checked = false;
+        document.getElementById('otSaveAddressButtonContainer').style.display = 'none';
+        
+        // Clear any radio button selections
+        var selectedRadio = document.querySelector('input[name="otDeliveryAddress"]:checked');
+        if (selectedRadio) {
+            selectedRadio.checked = false;
+            selectedRadio.closest('.list-group-item').classList.remove('active');
+        }
+        document.getElementById('otSelectedStreet').value = '';
+        document.getElementById('otSelectedCity').value = '';
     }
 }
 
@@ -2295,6 +2338,13 @@ function saveDeliveryAddressNow() {
               document.getElementById('otManualCity').value = '';
               document.getElementById('otSaveAddressToOdoo').checked = false;
               document.getElementById('otSaveAddressButtonContainer').style.display = 'none';
+              
+              // Hide the new address form
+              document.getElementById('otNewAddressForm').style.display = 'none';
+              var showBtn = document.getElementById('otShowNewAddressBtn');
+              showBtn.innerHTML = '<i class="fas fa-plus"></i> Crear una nueva dirección de entrega';
+              showBtn.classList.remove('btn-outline-secondary');
+              showBtn.classList.add('btn-outline-primary');
               
               // Reload child contacts which will repopulate the address list
               loadChildContacts(clientId, clientName).then(function() {
