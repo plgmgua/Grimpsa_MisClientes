@@ -1780,57 +1780,17 @@ function populateDeliveryAddresses(parentContact) {
         return;
     }
     
-    // Filter addresses by type (exclude 'contact' type as those are for contact persons)
+    // Filter only delivery addresses (exclude 'contact' type as those are for contact persons)
     var deliveryAddresses = otChildContacts.filter(c => c.type === 'delivery');
-    var invoiceAddresses = otChildContacts.filter(c => c.type === 'invoice');
-    var otherAddresses = otChildContacts.filter(c => c.type !== 'delivery' && c.type !== 'invoice' && c.type !== 'contact');
-    
-    var hasAnyAddresses = false;
     
     // Add delivery addresses
     if (deliveryAddresses.length > 0) {
-        var groupLabel = document.createElement('div');
-        groupLabel.className = 'list-group-item bg-light fw-bold';
-        groupLabel.textContent = 'Direcciones de Entrega';
-        listContainer.appendChild(groupLabel);
-        
         deliveryAddresses.forEach(function(contact) {
             var listItem = createAddressListItem(contact, 'otDeliveryAddress');
             listContainer.appendChild(listItem);
         });
-        hasAnyAddresses = true;
-    }
-    
-    // Add invoice addresses
-    if (invoiceAddresses.length > 0) {
-        var groupLabel = document.createElement('div');
-        groupLabel.className = 'list-group-item bg-light fw-bold';
-        groupLabel.textContent = 'Direcciones de Facturación';
-        listContainer.appendChild(groupLabel);
-        
-        invoiceAddresses.forEach(function(contact) {
-            var listItem = createAddressListItem(contact, 'otDeliveryAddress');
-            listContainer.appendChild(listItem);
-        });
-        hasAnyAddresses = true;
-    }
-    
-    // Add other addresses
-    if (otherAddresses.length > 0) {
-        var groupLabel = document.createElement('div');
-        groupLabel.className = 'list-group-item bg-light fw-bold';
-        groupLabel.textContent = 'Otras Direcciones';
-        listContainer.appendChild(groupLabel);
-        
-        otherAddresses.forEach(function(contact) {
-            var listItem = createAddressListItem(contact, 'otDeliveryAddress');
-            listContainer.appendChild(listItem);
-        });
-        hasAnyAddresses = true;
-    }
-    
-    if (!hasAnyAddresses) {
-        listContainer.innerHTML = '<div class="text-center text-muted p-3">No hay direcciones disponibles - use campos manuales abajo</div>';
+    } else {
+        listContainer.innerHTML = '<div class="text-center text-muted p-3">No hay direcciones de entrega disponibles - use campos manuales abajo</div>';
     }
 }
 
