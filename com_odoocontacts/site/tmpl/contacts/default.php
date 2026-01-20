@@ -1738,7 +1738,7 @@ function loadCreditLimit(clientId) {
             if (data.success && data.credit_limit !== null && data.credit_limit !== undefined) {
                 // Format the credit limit as currency
                 var creditLimit = parseFloat(data.credit_limit);
-                if (!isNaN(creditLimit) && creditLimit >= 0) {
+                if (!isNaN(creditLimit) && creditLimit > 100) {
                     // Format as currency (Q for Quetzales, or adjust as needed)
                     var formattedAmount = new Intl.NumberFormat('es-GT', {
                         style: 'currency',
