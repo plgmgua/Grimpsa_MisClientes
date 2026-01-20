@@ -462,26 +462,30 @@ function safeGet($array, $key, $default = '') {
                         Seleccione o ingrese la persona de contacto para esta orden de trabajo.
                     </div>
                     
-                    <!-- Contact Selection Dropdown -->
-                    <div id="otContactDropdownSection" class="mb-3">
-                        <label for="otContactSelect" class="form-label">
+                    <!-- Contact Selection List -->
+                    <div id="otContactListSection" class="mb-3">
+                        <label class="form-label">
                             <i class="fas fa-user-tie"></i> Persona de Contacto
                         </label>
-                        <select id="otContactSelect" class="form-select">
-                            <option value="">Seleccione un contacto...</option>
-                        </select>
+                        <div id="otContactList" class="list-group" style="max-height: 200px; overflow-y: auto;">
+                            <div class="text-center text-muted p-3">
+                                Cargando contactos...
+                            </div>
+                        </div>
                         <div class="form-text">
-                            Seleccione una persona de contacto existente o ingrese una nueva abajo.
+                            Seleccione una persona de contacto existente o cree una nueva.
                         </div>
                     </div>
                     
-                    <!-- OR Divider -->
+                    <!-- Button to show new contact form -->
                     <div class="text-center mb-3">
-                        <span class="badge bg-secondary">O</span>
+                        <button type="button" class="btn btn-outline-primary btn-sm" id="otShowNewContactBtn" onclick="toggleNewContactForm()">
+                            <i class="fas fa-plus"></i> Crear un nuevo contacto
+                        </button>
                     </div>
                     
                     <!-- Manual Contact Input -->
-                    <div class="card mb-3">
+                    <div id="otNewContactForm" class="card mb-3" style="display: none;">
                         <div class="card-header bg-light">
                             <h6 class="mb-0"><i class="fas fa-user-plus"></i> Ingresar Nuevo Contacto</h6>
                         </div>
@@ -516,17 +520,6 @@ function safeGet($array, $key, $default = '') {
                                     <i class="fas fa-save"></i> Guardar Contacto
                                 </button>
                             </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Contact Preview -->
-                    <div id="otContactPreview" class="card mb-3" style="display: none;">
-                        <div class="card-header bg-light">
-                            <h6 class="mb-0"><i class="fas fa-address-card"></i> Contacto Seleccionado</h6>
-                        </div>
-                        <div class="card-body">
-                            <p class="mb-1"><strong>Nombre:</strong> <span id="otPreviewContactName"></span></p>
-                            <p class="mb-0"><strong>Teléfono:</strong> <span id="otPreviewContactPhone"></span></p>
                         </div>
                     </div>
                     
@@ -1684,12 +1677,31 @@ function openOTModal(clientId, clientName, clientVat) {
     });
     
     // Clear previous selections - contact
-    document.getElementById('otContactSelect').innerHTML = '<option value="">Seleccione un contacto...</option>';
+    document.getElementById('otContactList').innerHTML = '<div class="text-center text-muted p-3">Cargando contactos...</div>';
     document.getElementById('otManualContactName').value = '';
     document.getElementById('otManualContactPhone').value = '';
     document.getElementById('otSaveContactToOdoo').checked = false;
-    document.getElementById('otContactPreview').style.display = 'none';
     document.getElementById('otSaveContactButtonContainer').style.display = 'none';
+    
+    // Hide new contact form and reset button
+    document.getElementById('otNewContactForm').style.display = 'none';
+    var showContactBtn = document.getElementById('otShowNewContactBtn');
+    showContactBtn.innerHTML = '<i class="fas fa-plus"></i> Crear un nuevo contacto';
+    showContactBtn.classList.remove('btn-outline-secondary');
+    showContactBtn.classList.add('btn-outline-primary');
+    
+    // Clear selected contact data
+    document.getElementById('otSelectedContactName').value = '';
+    document.getElementById('otSelectedContactPhone').value = '';
+    
+    // Clear radio button selections
+    var contactRadios = document.querySelectorAll('input[name="otContact"]');
+    contactRadios.forEach(function(radio) {
+        radio.checked = false;
+        if (radio.closest('.list-group-item')) {
+            radio.closest('.list-group-item').classList.remove('active');
+        }
+    });
     
     // Reset to Step 1
     document.getElementById('otStep1').style.display = 'block';
@@ -1803,6 +1815,39 @@ function populateDeliveryAddresses(parentContact) {
     }
 }
 
+// Toggle new contact form visibility
+function toggleNewContactForm() {
+    var form = document.getElementById('otNewContactForm');
+    var button = document.getElementById('otShowNewContactBtn');
+    
+    if (form.style.display === 'none') {
+        form.style.display = 'block';
+        button.innerHTML = '<i class="fas fa-times"></i> Cancelar';
+        button.classList.remove('btn-outline-primary');
+        button.classList.add('btn-outline-secondary');
+    } else {
+        form.style.display = 'none';
+        button.innerHTML = '<i class="fas fa-plus"></i> Crear un nuevo contacto';
+        button.classList.remove('btn-outline-secondary');
+        button.classList.add('btn-outline-primary');
+        
+        // Clear form fields when hiding
+        document.getElementById('otManualContactName').value = '';
+        document.getElementById('otManualContactPhone').value = '';
+        document.getElementById('otSaveContactToOdoo').checked = false;
+        document.getElementById('otSaveContactButtonContainer').style.display = 'none';
+        
+        // Clear any radio button selections
+        var selectedRadio = document.querySelector('input[name="otContact"]:checked');
+        if (selectedRadio) {
+            selectedRadio.checked = false;
+            selectedRadio.closest('.list-group-item').classList.remove('active');
+        }
+        document.getElementById('otSelectedContactName').value = '';
+        document.getElementById('otSelectedContactPhone').value = '';
+    }
+}
+
 // Toggle new address form visibility
 function toggleNewAddressForm() {
     var form = document.getElementById('otNewAddressForm');
@@ -1897,69 +1942,91 @@ function createAddressListItem(contact, name) {
     return listItem;
 }
 
-// Populate contact persons dropdown (type = 'contact' + parent)
+// Populate contact persons list with radio buttons
 function populateContactPersons(parentContact) {
-    var select = document.getElementById('otContactSelect');
-    select.innerHTML = '<option value="">Seleccione un contacto...</option>';
+    var listContainer = document.getElementById('otContactList');
+    listContainer.innerHTML = '';
     
     var hasContacts = false;
     
     // Add parent contact first
     if (parentContact) {
-        var parentGroup = document.createElement('optgroup');
-        parentGroup.label = 'Contacto Principal';
-        var option = document.createElement('option');
-        option.value = parentContact.id || 0;
-        option.textContent = 'Contacto Principal - ' + (parentContact.name || 'Sin nombre');
-        option.dataset.name = parentContact.name || '';
-        option.dataset.phone = parentContact.phone || parentContact.mobile || '';
-        parentGroup.appendChild(option);
-        select.appendChild(parentGroup);
+        var parentContactObj = {
+            id: parentContact.id || 0,
+            name: 'Contacto Principal - ' + (parentContact.name || 'Sin nombre'),
+            phone: parentContact.phone || parentContact.mobile || '',
+            isParent: true
+        };
+        var listItem = createContactListItem(parentContactObj, 'otContact');
+        listContainer.appendChild(listItem);
         hasContacts = true;
     }
     
-    // Filter only 'contact' type from children
-    var contactPersons = otChildContacts.filter(c => c.type === 'contact');
-    
-    if (contactPersons.length > 0) {
-        var childGroup = document.createElement('optgroup');
-        childGroup.label = 'Contactos Adicionales';
-        contactPersons.forEach(function(contact) {
-            var option = document.createElement('option');
-            option.value = contact.id;
-            option.textContent = contact.name;
-            option.dataset.name = contact.name || '';
-            option.dataset.phone = contact.phone || contact.mobile || '';
-            childGroup.appendChild(option);
-        });
-        select.appendChild(childGroup);
+    // Add all child contacts (no type filter - show all)
+    otChildContacts.forEach(function(contact) {
+        var listItem = createContactListItem(contact, 'otContact');
+        listContainer.appendChild(listItem);
         hasContacts = true;
-    }
+    });
     
     if (!hasContacts) {
-        select.innerHTML = '<option value="">No hay personas de contacto - use campos manuales abajo</option>';
-        return;
+        listContainer.innerHTML = '<div class="text-center text-muted p-3">No hay personas de contacto disponibles - use campos manuales abajo</div>';
     }
+}
+
+// Create a list item with radio button for contact selection
+function createContactListItem(contact, name) {
+    var listItem = document.createElement('label');
+    listItem.className = 'list-group-item d-flex align-items-start';
+    listItem.style.cursor = 'pointer';
     
-    // Handle contact selection - clear manual inputs when dropdown is used
-    select.addEventListener('change', function() {
-        var selectedOption = this.options[this.selectedIndex];
-        if (selectedOption.value) {
+    var radio = document.createElement('input');
+    radio.type = 'radio';
+    radio.name = name;
+    radio.value = contact.id || 0;
+    radio.className = 'form-check-input me-2 mt-1';
+    radio.dataset.name = contact.name || '';
+    radio.dataset.phone = contact.phone || contact.mobile || '';
+    
+    var content = document.createElement('div');
+    content.className = 'flex-grow-1';
+    
+    var nameDiv = document.createElement('div');
+    nameDiv.className = 'fw-bold';
+    nameDiv.textContent = contact.name || 'Sin nombre';
+    
+    var phoneDiv = document.createElement('div');
+    phoneDiv.className = 'text-muted small';
+    phoneDiv.textContent = radio.dataset.phone || 'Sin teléfono';
+    
+    content.appendChild(nameDiv);
+    content.appendChild(phoneDiv);
+    
+    listItem.appendChild(radio);
+    listItem.appendChild(content);
+    
+    // Handle selection change
+    radio.addEventListener('change', function() {
+        if (this.checked) {
             // Clear manual inputs
             document.getElementById('otManualContactName').value = '';
             document.getElementById('otManualContactPhone').value = '';
             document.getElementById('otSaveContactToOdoo').checked = false;
             
             // Set selected contact data
-            document.getElementById('otSelectedContactName').value = selectedOption.dataset.name;
-            document.getElementById('otSelectedContactPhone').value = selectedOption.dataset.phone;
-            document.getElementById('otPreviewContactName').textContent = selectedOption.dataset.name || 'N/A';
-            document.getElementById('otPreviewContactPhone').textContent = selectedOption.dataset.phone || 'N/A';
-            document.getElementById('otContactPreview').style.display = 'block';
-        } else {
-            document.getElementById('otContactPreview').style.display = 'none';
+            document.getElementById('otSelectedContactName').value = this.dataset.name;
+            document.getElementById('otSelectedContactPhone').value = this.dataset.phone;
+            
+            // Remove selection from other radio buttons
+            var allRadios = document.querySelectorAll('input[name="' + name + '"]');
+            allRadios.forEach(function(r) {
+                r.closest('.list-group-item').classList.remove('active');
+            });
+            this.closest('.list-group-item').classList.add('active');
         }
     });
+    
+    return listItem;
 }
 
 // Setup manual input listeners
@@ -2017,20 +2084,32 @@ document.addEventListener('DOMContentLoaded', function() {
     
     if (manualNameInput) {
         manualNameInput.addEventListener('input', function() {
-            if (this.value) {
-                document.getElementById('otContactSelect').value = '';
-                document.getElementById('otContactPreview').style.display = 'none';
-            }
+                if (this.value) {
+                    // Clear radio button selection
+                    var selectedRadio = document.querySelector('input[name="otContact"]:checked');
+                    if (selectedRadio) {
+                        selectedRadio.checked = false;
+                        selectedRadio.closest('.list-group-item').classList.remove('active');
+                    }
+                    document.getElementById('otSelectedContactName').value = '';
+                    document.getElementById('otSelectedContactPhone').value = '';
+                }
             toggleSaveContactButton();
         });
     }
     
     if (manualPhoneInput) {
         manualPhoneInput.addEventListener('input', function() {
-            if (this.value) {
-                document.getElementById('otContactSelect').value = '';
-                document.getElementById('otContactPreview').style.display = 'none';
-            }
+                if (this.value) {
+                    // Clear radio button selection
+                    var selectedRadio = document.querySelector('input[name="otContact"]:checked');
+                    if (selectedRadio) {
+                        selectedRadio.checked = false;
+                        selectedRadio.closest('.list-group-item').classList.remove('active');
+                    }
+                    document.getElementById('otSelectedContactName').value = '';
+                    document.getElementById('otSelectedContactPhone').value = '';
+                }
             toggleSaveContactButton();
         });
     }
@@ -2240,16 +2319,16 @@ function goToStep1() {
 // Submit OT Form
 function submitOT() {
     var clientId = document.getElementById('otClientId').value;
-    var contactSelect = document.getElementById('otContactSelect');
+    var selectedContactRadio = document.querySelector('input[name="otContact"]:checked');
     var manualName = document.getElementById('otManualContactName').value.trim();
     var manualPhone = document.getElementById('otManualContactPhone').value.trim();
     
     var contactName = '';
     var contactPhone = '';
     
-    // Determine if using dropdown or manual input
-    if (contactSelect.value) {
-        // Using dropdown
+    // Determine if using radio selection or manual input
+    if (selectedContactRadio) {
+        // Using radio selection
         contactName = document.getElementById('otSelectedContactName').value;
         contactPhone = document.getElementById('otSelectedContactPhone').value;
     } else if (manualName && manualPhone) {
@@ -2416,30 +2495,40 @@ function saveContactNow() {
           if (data.success) {
               showNotification('Contacto guardado exitosamente', 'success');
               
-              // Add new contact to dropdown
-              var select = document.getElementById('otContactSelect');
-              var option = document.createElement('option');
-              option.value = data.contact_id || 'new';
-              option.textContent = contactName;
-              option.dataset.name = contactName;
-              option.dataset.phone = contactPhone;
-              option.selected = true;
-              select.appendChild(option);
-              
-              // Set hidden fields
-              document.getElementById('otSelectedContactName').value = contactName;
-              document.getElementById('otSelectedContactPhone').value = contactPhone;
-              
-              // Show preview
-              document.getElementById('otPreviewContactName').textContent = contactName;
-              document.getElementById('otPreviewContactPhone').textContent = contactPhone;
-              document.getElementById('otContactPreview').style.display = 'block';
-              
-              // Clear manual inputs and hide button
+              // Clear manual inputs and hide button first
               document.getElementById('otManualContactName').value = '';
               document.getElementById('otManualContactPhone').value = '';
               document.getElementById('otSaveContactToOdoo').checked = false;
               document.getElementById('otSaveContactButtonContainer').style.display = 'none';
+              
+              // Hide the new contact form
+              document.getElementById('otNewContactForm').style.display = 'none';
+              var showContactBtn = document.getElementById('otShowNewContactBtn');
+              showContactBtn.innerHTML = '<i class="fas fa-plus"></i> Crear un nuevo contacto';
+              showContactBtn.classList.remove('btn-outline-secondary');
+              showContactBtn.classList.add('btn-outline-primary');
+              
+              // Reload child contacts which will repopulate the contact list
+              var clientId = document.getElementById('otClientId').value;
+              var clientName = document.getElementById('otClientName').textContent;
+              
+              loadChildContacts(clientId, clientName).then(function() {
+                  // After reloading, try to select the newly created contact
+                  setTimeout(function() {
+                      var newContactRadio = document.querySelector('input[name="otContact"][value="' + (data.contact_id || 'new') + '"]');
+                      if (newContactRadio) {
+                          newContactRadio.checked = true;
+                          newContactRadio.dispatchEvent(new Event('change'));
+                      } else {
+                          // If we can't find it by ID, select the first contact
+                          var firstContactRadio = document.querySelector('input[name="otContact"]');
+                          if (firstContactRadio) {
+                              firstContactRadio.checked = true;
+                              firstContactRadio.dispatchEvent(new Event('change'));
+                          }
+                      }
+                  }, 100);
+              });
           } else {
               showNotification('Error al guardar: ' + (data.message || 'Error desconocido') + '. Por favor contacte a soporte.', 'danger');
           }
