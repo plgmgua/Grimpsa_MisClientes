@@ -312,16 +312,16 @@ function safeGet($array, $key, $default = '') {
                 </div>
                 
                 <!-- Credit Limit Banner -->
-                <div id="otCreditLimitBanner" class="alert alert-info mb-3" style="display: none;">
-                    <i class="fas fa-credit-card"></i>
+                <div id="otCreditLimitBanner" class="alert alert-info mb-3" style="display: none; height: 25px; padding: 0.25rem 0.75rem; line-height: 1.5; align-items: center;">
+                    <i class="fas fa-credit-card" style="margin-right: 0.5rem;"></i>
                     <strong>Límite de Crédito:</strong> 
-                    <span id="otCreditLimitAmount">-</span>
+                    <span id="otCreditLimitAmount" style="margin-left: 0.25rem;">-</span>
                 </div>
                 
                 <!-- Step 1: Delivery Information -->
                 <div id="otStep1" style="display: block;">
-                    <div class="alert alert-info">
-                        <i class="fas fa-info-circle"></i>
+                    <div class="alert alert-info" style="height: 25px; padding: 0.25rem 0.75rem; line-height: 1.5; display: flex; align-items: center;">
+                        <i class="fas fa-info-circle" style="margin-right: 0.5rem;"></i>
                         Seleccione la dirección de entrega y agregue instrucciones.
                     </div>
                     
@@ -1724,7 +1724,7 @@ function loadCreditLimit(clientId) {
                     }).format(creditLimit);
                     
                     amountSpan.textContent = formattedAmount;
-                    banner.style.display = 'block';
+                    banner.style.display = 'flex';
                 } else {
                     banner.style.display = 'none';
                 }
